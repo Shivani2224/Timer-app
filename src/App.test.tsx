@@ -9,7 +9,6 @@ describe("Timer", () => {
     expect(screen.getByText("Timer")).toBeInTheDocument();
   });
 
-
   describe("Default Timer", () => {
     it("should show 00:02:00 on load", () => {
       render(<App />);
@@ -75,7 +74,6 @@ describe("Timer", () => {
       const saveButton = screen.getByRole("button", { name: /save/i });
       await user.click(saveButton);
 
-      // 75 seconds = 1 minute and 15 seconds
       expect(screen.getByText(/01:15/)).toBeInTheDocument();
     });
 
@@ -94,13 +92,11 @@ describe("Timer", () => {
       const saveButton = screen.getByRole("button", { name: /save/i });
       await user.click(saveButton);
 
-      // 75 minutes = 1 hour and 15 minutes
       expect(screen.getByText(/01:15:00/)).toBeInTheDocument();
     });
   });
 
-
-  describe(" Start Timer", () => {
+  describe("Start Timer", () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -121,7 +117,6 @@ describe("Timer", () => {
 
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
 
-      // Advance 1 second
       act(() => {
         vi.advanceTimersByTime(1000);
       });
@@ -143,7 +138,6 @@ describe("Timer", () => {
     });
   });
 
-
   describe("US-3: Pause Timer", () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -156,44 +150,34 @@ describe("Timer", () => {
     it("should freeze the countdown when Pause is clicked", () => {
       render(<App />);
 
-      // Start the timer
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
 
-      // Let 3 seconds pass
       act(() => {
         vi.advanceTimersByTime(3000);
       });
 
-      // Pause the timer
       fireEvent.click(screen.getByRole("button", { name: /pause/i }));
 
-      // Advance 5 more seconds
       act(() => {
         vi.advanceTimersByTime(5000);
       });
 
-      // Time should still be at 1:57 (frozen at the pause moment)
       expect(screen.getByText("00:01:57")).toBeInTheDocument();
     });
 
     it("should resume countdown when Resume is clicked", () => {
       render(<App />);
 
-      // Start the timer
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
 
-      // Let 3 seconds pass → 1:57
       act(() => {
         vi.advanceTimersByTime(3000);
       });
 
-      // Pause
       fireEvent.click(screen.getByRole("button", { name: /pause/i }));
 
-      // Resume
       fireEvent.click(screen.getByRole("button", { name: /resume/i }));
 
-      // Advance 2 more seconds → 1:55
       act(() => {
         vi.advanceTimersByTime(2000);
       });
@@ -201,7 +185,6 @@ describe("Timer", () => {
       expect(screen.getByText("00:01:55")).toBeInTheDocument();
     });
   });
-
 
   describe("US-4: Stop Timer", () => {
     beforeEach(() => {
@@ -215,22 +198,18 @@ describe("Timer", () => {
     it("should stop the timer completely", () => {
       render(<App />);
 
-      // Start the timer
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
 
       act(() => {
         vi.advanceTimersByTime(5000);
       });
 
-      // Stop the timer
       fireEvent.click(screen.getByRole("button", { name: /stop/i }));
 
-      // Advance more time — should not change
       act(() => {
         vi.advanceTimersByTime(5000);
       });
 
-      // Should return to default time
       expect(screen.getByText("00:02:00")).toBeInTheDocument();
     });
 
@@ -247,13 +226,11 @@ describe("Timer", () => {
 
       expect(screen.getByText("00:02:00")).toBeInTheDocument();
 
-      // Start button should be visible again
       expect(
         screen.getByRole("button", { name: /start/i })
       ).toBeInTheDocument();
     });
   });
-
 
   describe("US-5: Reset Timer", () => {
     beforeEach(() => {
@@ -267,48 +244,39 @@ describe("Timer", () => {
     it("should reset to the originally set time", () => {
       render(<App />);
 
-      // Start and let some time pass
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
 
       act(() => {
         vi.advanceTimersByTime(10000);
       });
 
-      // Reset
       fireEvent.click(screen.getByRole("button", { name: /reset/i }));
 
-      // Should go back to original time
       expect(screen.getByText("00:02:00")).toBeInTheDocument();
     });
 
     it("should stop and return to idle after reset", () => {
       render(<App />);
 
-      // Start and let time pass
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
 
       act(() => {
         vi.advanceTimersByTime(5000);
       });
 
-      // Reset
       fireEvent.click(screen.getByRole("button", { name: /reset/i }));
 
-      // Wait — timer should NOT be running
       act(() => {
         vi.advanceTimersByTime(3000);
       });
 
-      // Should still show the original time (not counting down)
       expect(screen.getByText("00:02:00")).toBeInTheDocument();
 
-      // Start button should be visible (idle state)
       expect(
         screen.getByRole("button", { name: /start/i })
       ).toBeInTheDocument();
     });
   });
-
 
   describe("US-6: Sound Alert", () => {
     beforeEach(() => {
@@ -328,10 +296,8 @@ describe("Timer", () => {
 
       render(<App />);
 
-      // Start the timer (default 2 minutes = 120 seconds)
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
 
-      // Advance to 0
       act(() => {
         vi.advanceTimersByTime(120000);
       });
