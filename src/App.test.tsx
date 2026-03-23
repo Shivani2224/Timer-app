@@ -66,7 +66,6 @@ describe("Timer", () => {
       await user.click(screen.getByRole("button", { name: /edit timer/i }));
 
       const secondsInput = screen.getByLabelText(/seconds/i);
-      const minutesInput = screen.getByLabelText(/minutes/i);
 
       await user.clear(secondsInput);
       await user.type(secondsInput, "75");
@@ -86,6 +85,7 @@ describe("Timer", () => {
       const minutesInput = screen.getByLabelText(/minutes/i);
       const hoursInput = screen.getByLabelText(/hours/i);
 
+      await user.clear(hoursInput);
       await user.clear(minutesInput);
       await user.type(minutesInput, "75");
 
