@@ -3,10 +3,13 @@ import { render, screen, act, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 
-describe("Timer", () => {
-  it("should display the timer heading", () => {
+describe("Focus Timer", () => {
+  it("should display the Timer heading and subtitle", () => {
     render(<App />);
     expect(screen.getByText("Timer")).toBeInTheDocument();
+    expect(
+      screen.getByText("Stay productive, stay focused")
+    ).toBeInTheDocument();
   });
 
   describe("Default Timer", () => {
@@ -17,18 +20,18 @@ describe("Timer", () => {
   });
 
   describe("Edit Timer", () => {
-    it("should display an Edit Timer button", () => {
+    it("should display an Edit button", () => {
       render(<App />);
       expect(
-        screen.getByRole("button", { name: /edit timer/i })
+        screen.getByRole("button", { name: /^edit$/i })
       ).toBeInTheDocument();
     });
 
-    it("should open a popup when Edit Timer button is clicked", async () => {
+    it("should open a popup when Edit button is clicked", async () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /edit timer/i }));
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
       expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
@@ -37,7 +40,7 @@ describe("Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /edit timer/i }));
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
       const minutesInput = screen.getByLabelText(/minutes/i);
       await user.clear(minutesInput);
@@ -50,7 +53,7 @@ describe("Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /edit timer/i }));
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
       const minutesInput = screen.getByLabelText(/minutes/i);
       await user.clear(minutesInput);
@@ -63,7 +66,7 @@ describe("Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /edit timer/i }));
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
       const secondsInput = screen.getByLabelText(/seconds/i);
 
@@ -80,7 +83,7 @@ describe("Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /edit timer/i }));
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
       const minutesInput = screen.getByLabelText(/minutes/i);
       const hoursInput = screen.getByLabelText(/hours/i);
@@ -93,6 +96,14 @@ describe("Timer", () => {
       await user.click(saveButton);
 
       expect(screen.getByText(/01:15:00/)).toBeInTheDocument();
+    });
+  });
+
+  describe("Session Counter", () => {
+    it("should show sessions completed as 0 initially", () => {
+      render(<App />);
+      expect(screen.getByText("Sessions:")).toBeInTheDocument();
+      expect(screen.getByText("0")).toBeInTheDocument();
     });
   });
 
@@ -138,7 +149,7 @@ describe("Timer", () => {
     });
   });
 
-  describe("US-3: Pause Timer", () => {
+  describe("Pause Timer", () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -186,7 +197,7 @@ describe("Timer", () => {
     });
   });
 
-  describe("US-4: Stop Timer", () => {
+  describe("Stop Timer", () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -232,7 +243,7 @@ describe("Timer", () => {
     });
   });
 
-  describe("US-5: Reset Timer", () => {
+  describe("Reset Timer", () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -278,7 +289,7 @@ describe("Timer", () => {
     });
   });
 
-  describe("US-6: Sound Alert", () => {
+  describe("Sound Alert", () => {
     beforeEach(() => {
       vi.useFakeTimers();
     });
@@ -303,6 +314,116 @@ describe("Timer", () => {
       });
 
       expect(playMock).toHaveBeenCalled();
+    });
+
+    it("should increment session count when timer completes", () => {
+      const playMock = vi.fn().mockResolvedValue(undefined);
+      vi.spyOn(window.HTMLMediaElement.prototype, "play").mockImplementation(
+        playMock
+      );
+
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /start/i }));
+
+      act(() => {
+        vi.advanceTimersByTime(120000);
+      });
+
+      expect(screen.getByText("1")).toBeInTheDocument();
+    });
+  });
+
+  describe("Multiple Timers", () => {
+    it("should display an Add Timer button", () => {
+      render(<App />);
+      expect(
+        screen.getByRole("button", { name: /add timer/i })
+      ).toBeInTheDocument();
+    });
+
+    it("should add a new timer when Add Timer is clicked", () => {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+
+      const timers = screen.getAllByText("00:02:00");
+      expect(timers).toHaveLength(2);
+    });
+
+    it("should show delete button only when multiple timers exist", () => {
+      render(<App />);
+
+
+      expect(
+        screen.queryByTitle("Remove timer")
+      ).not.toBeInTheDocument();
+
+
+      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+
+
+      const deleteButtons = screen.getAllByTitle("Remove timer");
+      expect(deleteButtons.length).toBeGreaterThan(0);
+    });
+
+    it("should remove a timer when delete is clicked", () => {
+      render(<App />);
+
+
+      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      expect(screen.getAllByText("00:02:00")).toHaveLength(2);
+
+
+      fireEvent.click(screen.getAllByTitle("Remove timer")[0]);
+      expect(screen.getAllByText("00:02:00")).toHaveLength(1);
+    });
+
+    it("should run multiple timers independently", () => {
+      vi.useFakeTimers();
+
+      render(<App />);
+
+
+      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+
+
+      const startButtons = screen.getAllByRole("button", { name: /start/i });
+      fireEvent.click(startButtons[0]);
+
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+
+
+      expect(screen.getByText("00:01:55")).toBeInTheDocument();
+      expect(screen.getByText("00:02:00")).toBeInTheDocument();
+
+      vi.useRealTimers();
+    });
+
+    it("should edit the correct timer when multiple exist", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+
+      await user.click(screen.getByRole("button", { name: /add timer/i }));
+
+
+      const editButtons = screen.getAllByRole("button", { name: /^edit$/i });
+      await user.click(editButtons[0]);
+
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+
+      const minutesInput = screen.getByLabelText(/minutes/i);
+      await user.clear(minutesInput);
+      await user.type(minutesInput, "5");
+      await user.click(screen.getByRole("button", { name: /save/i }));
+
+
+      expect(screen.getByText("00:05:00")).toBeInTheDocument();
+      expect(screen.getByText("00:02:00")).toBeInTheDocument();
     });
   });
 });

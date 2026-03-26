@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+@theme {
+  --font-poppins: "Poppins", sans-serif;
+  --color-primary: #7c5cff;
+  --color-primary-hover: #6a4aee;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-muted: #6b7280;
+  --color-glass: rgba(255, 255, 255, 0.7);
+  --color-glass-border: rgba(0, 0, 0, 0.08);
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #f0f0f5 0%, #e8e6f0 100%);
+  min-height: 100vh;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px rgba(124, 92, 255, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(124, 92, 255, 0.6));
+  }
+}
+
+.progress-ring-animated {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

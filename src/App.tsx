@@ -1,159 +1,221 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import EditTimer from "./EditTimer";
+import TimerCard, { type TimerData } from "./TimerCard";
 
 const DEFAULT_TIME = 120;
-type TimerStatus = "idle" | "running" | "paused";
+
+let nextId = 1;
+function createTimer(): TimerData {
+  return {
+    id: String(nextId++),
+    timeLeft: DEFAULT_TIME,
+    initialTime: DEFAULT_TIME,
+    status: "idle",
+    sessions: 0,
+  };
+}
 
 export default function App() {
-  const [timeLeft, setTimeLeft] = useState(DEFAULT_TIME);
-  const [initialTime, setInitialTime] = useState(DEFAULT_TIME);
-  const [status, setStatus] = useState<TimerStatus>("idle");
-  const [showEdit, setShowEdit] = useState(false);
+  const [timers, setTimers] = useState<TimerData[]>([createTimer()]);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const progress = status === "idle" ? 1 : (initialTime > 0 ? timeLeft / initialTime : 0);
-  const arcRadius = 140;
-  const arcLength = Math.PI * arcRadius;
-  const arcOffset = arcLength * (1 - progress);
-  const arcColor = status === "idle" ? "#22c55e" : timeLeft <= 5 ? "#ef4444" : timeLeft <= 10 ? "#eab308" : "#22c55e";
-  const hours = Math.floor(timeLeft / 3600);
-  const minutes = Math.floor((timeLeft % 3600) / 60);
-  const seconds = timeLeft % 60;
-  const display = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   useEffect(() => {
-    if (status !== "running") return;
+    const hasRunning = timers.some((t) => t.status === "running");
+    if (!hasRunning) return;
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => Math.max(prev - 1, 0));
+      setTimers((prev) =>
+        prev.map((t) =>
+          t.status === "running" ? { ...t, timeLeft: Math.max(t.timeLeft - 1, 0) } : t
+        )
+      );
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [status]);
+  }, [timers]);
 
   useEffect(() => {
-    document.title = status === "running" || status === "paused"
-      ? `${display} — Timer`
-      : "Timer";
-  }, [display, status]);
+    const completed = timers.find(
+      (t) => t.timeLeft === 0 && t.status === "running"
+    );
+    if (!completed) return;
+
+    const audio = new Audio("/alarm.mp3");
+    audio.play().catch(() => {});
+
+    setTimers((prev) =>
+      prev.map((t) =>
+        t.id === completed.id
+          ? {
+              ...t,
+              status: "idle",
+              timeLeft: t.initialTime,
+              sessions: t.sessions + 1,
+            }
+          : t
+      )
+    );
+  }, [timers]);
 
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (showEdit) return;
-      if (e.code !== "Space") return;
-      e.preventDefault();
-      if (status === "idle" && timeLeft > 0) setStatus("running");
-      else if (status === "running") setStatus("paused");
-      else if (status === "paused") setStatus("running");
+    const running = timers.find(
+      (t) => t.status === "running" || t.status === "paused"
+    );
+    if (running) {
+      const h = Math.floor(running.timeLeft / 3600);
+      const m = Math.floor((running.timeLeft % 3600) / 60);
+      const s = running.timeLeft % 60;
+      const display = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+      document.title = `${display} — Timer`;
+    } else {
+      document.title = "Timer";
     }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [status, showEdit]);
+  }, [timers]);
 
-  useEffect(() => {
-    if (timeLeft === 0 && status === "running") {
-      const audio = new Audio("/alarm.mp3");
-      audio.play().catch(() => {});
-      setStatus("idle");
-      setTimeLeft(initialTime);
-    }
-  }, [timeLeft, status, initialTime]);
+  const updateTimer = useCallback(
+    (id: string, updates: Partial<TimerData>) => {
+      setTimers((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+      );
+    },
+    []
+  );
+
+  const handleStart = useCallback(
+    (id: string) => updateTimer(id, { status: "running" }),
+    [updateTimer]
+  );
+  const handlePause = useCallback(
+    (id: string) => updateTimer(id, { status: "paused" }),
+    [updateTimer]
+  );
+  const handleResume = useCallback(
+    (id: string) => updateTimer(id, { status: "running" }),
+    [updateTimer]
+  );
+  const handleStop = useCallback(
+    (id: string) => {
+      setTimers((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, status: "idle", timeLeft: t.initialTime } : t
+        )
+      );
+    },
+    []
+  );
+  const handleReset = useCallback(
+    (id: string) => {
+      setTimers((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, status: "idle", timeLeft: t.initialTime } : t
+        )
+      );
+    },
+    []
+  );
+  const handleDelete = useCallback((id: string) => {
+    setTimers((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const handleAddTimer = useCallback(() => {
+    setTimers((prev) => [...prev, createTimer()]);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="flex flex-col items-center">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Timer</h1>
-        <div className="flex flex-col items-center justify-center mb-8 gap-4">
-          <svg width="320" height="170" viewBox="0 0 320 170">
-            <path
-              id="arcPath"
-              d="M 10 160 A 140 140 0 0 1 310 160"
-              fill="none"
-              stroke="#e5e7eb"
-              strokeWidth="12"
-              strokeLinecap="round"
-            />
-            {progress > 0 && (
-              <path
-                d="M 10 160 A 140 140 0 0 1 310 160"
-                fill="none"
-                stroke={arcColor}
-                strokeWidth="12"
-                strokeLinecap="round"
-                strokeDasharray={`${arcLength}`}
-                strokeDashoffset={`${arcOffset}`}
-                style={{ transition: "stroke 0.3s" }}
-              />
-            )}
-          </svg>
-          <h3 className="text-5xl font-mono text-gray-800 tracking-widest -mt-24">
-            {display}
-          </h3>
-          <div className="flex gap-2 justify-center">
-            {status === "idle" && (
-              <>
-                <button
-                  className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setStatus("running")}
-                  disabled={timeLeft === 0}
-                >
-                  Start
-                </button>
-                <button
-                  className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition"
-                  onClick={() => setShowEdit(true)}
-                >
-                  Edit timer
-                </button>
-              </>
-            )}
-            {status === "running" && (
-              <button
-                className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition"
-                onClick={() => setStatus("paused")}
-              >
-                Pause
-              </button>
-            )}
-            {status === "paused" && (
-              <button
-                className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition"
-                onClick={() => setStatus("running")}
-              >
-                Resume
-              </button>
-            )}
-            {status !== "idle" && (
-              <>
-                <button
-                  className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition"
-                  onClick={() => {
-                    setTimeLeft(initialTime);
-                    setStatus("idle");
-                  }}
-                >
-                  Stop
-                </button>
-                <button
-                  className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition"
-                  onClick={() => {
-                    setTimeLeft(initialTime);
-                    setStatus("idle");
-                  }}
-                >
-                  Reset
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+    <div className="min-h-screen px-3 sm:px-6 lg:px-8 py-8 font-poppins">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 tracking-tight">
+          Timer
+        </h1>
+        <p className="text-muted text-xs sm:text-sm mt-1 hidden sm:block">
+          Stay productive, stay focused
+        </p>
       </div>
-      {showEdit && (
+
+      {timers.length === 1 ? (
+        <div className="flex flex-col items-center">
+          <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg">
+            <TimerCard
+              timer={timers[0]}
+              onStart={handleStart}
+              onPause={handlePause}
+              onResume={handleResume}
+              onStop={handleStop}
+              onReset={handleReset}
+              onEdit={(id) => setEditingId(id)}
+              onDelete={handleDelete}
+              canDelete={false}
+              solo
+            />
+          </div>
+          <button
+            onClick={handleAddTimer}
+            className="mt-4 sm:mt-6 px-5 sm:px-8 py-2.5 sm:py-3 bg-gray-100 hover:bg-gray-200 text-muted hover:text-gray-800 text-sm sm:text-base font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 cursor-pointer flex items-center gap-2"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            Add Timer
+          </button>
+        </div>
+      ) : (
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {timers.map((timer) => (
+            <TimerCard
+              key={timer.id}
+              timer={timer}
+              onStart={handleStart}
+              onPause={handlePause}
+              onResume={handleResume}
+              onStop={handleStop}
+              onReset={handleReset}
+              onEdit={(id) => setEditingId(id)}
+              onDelete={handleDelete}
+              canDelete
+            />
+          ))}
+
+          <button
+            onClick={handleAddTimer}
+            className="rounded-2xl sm:rounded-3xl border-2 border-dashed border-gray-300 hover:border-primary bg-white/30 hover:bg-white/50 backdrop-blur-xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 min-h-50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+          >
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-gray-400 group-hover:text-primary transition-colors"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            <span className="text-sm font-medium text-gray-400 group-hover:text-primary transition-colors">
+              Add Timer
+            </span>
+          </button>
+        </div>
+      )}
+
+      <p className="text-center text-muted/50 text-xs mt-6 hidden sm:block">
+        Press Space to start / pause
+      </p>
+
+      {editingId && (
         <EditTimer
           onSave={(totalSeconds) => {
-            setTimeLeft(totalSeconds);
-            setInitialTime(totalSeconds);
-            setShowEdit(false);
+            updateTimer(editingId, {
+              timeLeft: totalSeconds,
+              initialTime: totalSeconds,
+            });
+            setEditingId(null);
           }}
-          onClose={() => setShowEdit(false)}
+          onClose={() => setEditingId(null)}
         />
       )}
     </div>
