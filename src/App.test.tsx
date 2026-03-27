@@ -62,40 +62,129 @@ describe("Focus Timer", () => {
       expect(minutesInput).not.toHaveValue("-5");
     });
 
-    it("should auto-convert seconds greater than 59", async () => {
+    it("should show error when seconds exceed 59", async () => {
       const user = userEvent.setup();
       render(<App />);
 
       await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
       const secondsInput = screen.getByLabelText(/seconds/i);
-
       await user.clear(secondsInput);
       await user.type(secondsInput, "75");
 
-      const saveButton = screen.getByRole("button", { name: /save/i });
-      await user.click(saveButton);
-
-      expect(screen.getByText(/01:15/)).toBeInTheDocument();
+      expect(screen.getByText("Minutes and seconds cannot be more than 59")).toBeInTheDocument();
     });
 
-    it("should auto-convert minutes greater than 59", async () => {
+    it("should show error when minutes exceed 59", async () => {
       const user = userEvent.setup();
       render(<App />);
 
       await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
       const minutesInput = screen.getByLabelText(/minutes/i);
-      const hoursInput = screen.getByLabelText(/hours/i);
-
-      await user.clear(hoursInput);
       await user.clear(minutesInput);
       await user.type(minutesInput, "75");
 
-      const saveButton = screen.getByRole("button", { name: /save/i });
-      await user.click(saveButton);
+      expect(screen.getByText("Minutes and seconds cannot be more than 59")).toBeInTheDocument();
+    });
 
-      expect(screen.getByText(/01:15:00/)).toBeInTheDocument();
+    it("should not save when minutes or seconds exceed 59", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      const minutesInput = screen.getByLabelText(/minutes/i);
+      await user.clear(minutesInput);
+      await user.type(minutesInput, "75");
+
+      await user.click(screen.getByRole("button", { name: /save/i }));
+
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+
+    it("should show error when all fields are zero", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      expect(screen.getByText("Enter a value in at least one field")).toBeInTheDocument();
+    });
+
+    it("should not save when all fields are zero", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      await user.click(screen.getByRole("button", { name: /save/i }));
+
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+
+    it("should show error when hours exceed 99", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      const hoursInput = screen.getByLabelText(/hours/i);
+      await user.clear(hoursInput);
+      await user.type(hoursInput, "100");
+
+      expect(screen.getByText("Hours cannot be more than 99")).toBeInTheDocument();
+    });
+
+    it("should not save when hours exceed 99", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      const hoursInput = screen.getByLabelText(/hours/i);
+      await user.clear(hoursInput);
+      await user.type(hoursInput, "100");
+
+      await user.click(screen.getByRole("button", { name: /save/i }));
+
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+
+    it("should clear hours error when value is corrected to 99 or below", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      const hoursInput = screen.getByLabelText(/hours/i);
+      await user.clear(hoursInput);
+      await user.type(hoursInput, "100");
+
+      expect(screen.getByText("Hours cannot be more than 99")).toBeInTheDocument();
+
+      await user.clear(hoursInput);
+      await user.type(hoursInput, "50");
+
+      expect(screen.queryByText("Hours cannot be more than 99")).not.toBeInTheDocument();
+    });
+
+    it("should clear error when value is corrected to 59 or below", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      const minutesInput = screen.getByLabelText(/minutes/i);
+      await user.clear(minutesInput);
+      await user.type(minutesInput, "75");
+
+      expect(screen.getByText("Minutes and seconds cannot be more than 59")).toBeInTheDocument();
+
+      await user.clear(minutesInput);
+      await user.type(minutesInput, "30");
+
+      expect(screen.queryByText("Minutes and seconds cannot be more than 59")).not.toBeInTheDocument();
     });
   });
 
