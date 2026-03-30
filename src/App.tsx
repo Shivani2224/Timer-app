@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import EditTimer from "./EditTimer";
 import TimerCard, { type TimerData } from "./TimerCard";
 
@@ -19,42 +19,34 @@ export default function App() {
   const [timers, setTimers] = useState<TimerData[]>([createTimer()]);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const hasRunning = timers.some((t) => t.status === "running");
-    if (!hasRunning) return;
-
-    const interval = setInterval(() => {
-      setTimers((prev) =>
-        prev.map((t) =>
-          t.status === "running" ? { ...t, timeLeft: Math.max(t.timeLeft - 1, 0) } : t
-        )
-      );
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timers]);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const completed = timers.find(
-      (t) => t.timeLeft === 0 && t.status === "running"
-    );
-    if (!completed) return;
-
-    const audio = new Audio("/alarm.mp3");
-    audio.play().catch(() => {});
-
-    setTimers((prev) =>
-      prev.map((t) =>
-        t.id === completed.id
-          ? {
+    intervalRef.current = setInterval(() => {
+      setTimers((prev) => {
+        let hasChanges = false;
+        const next = prev.map((t) => {
+          if (t.status !== "running") return t;
+          hasChanges = true;
+          if (t.timeLeft <= 1) {
+            const audio = new Audio("/alarm.mp3");
+            audio.play().catch(() => {});
+            return {
               ...t,
-              status: "idle",
+              status: "idle" as const,
               timeLeft: t.initialTime,
               sessions: t.sessions + 1,
-            }
-          : t
-      )
-    );
-  }, [timers]);
+            };
+          }
+          return { ...t, timeLeft: t.timeLeft - 1 };
+        });
+        return hasChanges ? next : prev;
+      });
+    }, 1000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const running = timers.find(
