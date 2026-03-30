@@ -20,6 +20,7 @@ interface TimerCardProps {
   onStop: (id: string) => void;
   onReset: (id: string) => void;
   onEdit: (id: string) => void;
+  onInlineEdit: (id: string, totalSeconds: number) => void;
   onDelete: (id: string) => void;
   canDelete: boolean;
   solo?: boolean;
@@ -33,6 +34,7 @@ export default function TimerCard({
   onStop,
   onReset,
   onEdit,
+  onInlineEdit,
   onDelete,
   canDelete,
   solo = false,
@@ -41,6 +43,11 @@ export default function TimerCard({
   const pipWindowRef = useRef<Window | null>(null);
   const pipRootRef = useRef<Root | null>(null);
   const [isPip, setIsPip] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editHours, setEditHours] = useState("");
+  const [editMinutes, setEditMinutes] = useState("");
+  const [editSeconds, setEditSeconds] = useState("");
+  const editContainerRef = useRef<HTMLDivElement | null>(null);
 
   const progress =
     status === "idle" ? 1 : initialTime > 0 ? timeLeft / initialTime : 0;
@@ -69,6 +76,60 @@ export default function TimerCard({
 
   const supportsPip =
     typeof window !== "undefined" && "documentPictureInPicture" in window;
+
+  function startEditing() {
+    if (status !== "idle") return;
+    setEditHours(String(hours));
+    setEditMinutes(String(minutes));
+    setEditSeconds(String(seconds));
+    setIsEditing(true);
+  }
+
+  function saveEdit() {
+    const h = Number(editHours) || 0;
+    const m = Number(editMinutes) || 0;
+    const s = Number(editSeconds) || 0;
+    if (h > 99 || m > 59 || s > 59) {
+      cancelEdit();
+      return;
+    }
+    const total = h * 3600 + m * 60 + s;
+    if (total === 0) {
+      cancelEdit();
+      return;
+    }
+    onInlineEdit(id, total);
+    setIsEditing(false);
+  }
+
+  function cancelEdit() {
+    setIsEditing(false);
+  }
+
+  function handleEditKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveEdit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEdit();
+    }
+  }
+
+  function filterNumeric(value: string): string {
+    return value.replace(/[^0-9]/g, "");
+  }
+
+  useEffect(() => {
+    if (!isEditing) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (editContainerRef.current && !editContainerRef.current.contains(e.target as Node)) {
+        saveEdit();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  });
 
   useEffect(() => {
     if (!isPip || !pipWindowRef.current || !pipRootRef.current) return;
@@ -221,9 +282,40 @@ export default function TimerCard({
           )}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`font-bold text-gray-800 tracking-widest font-mono ${solo ? "text-3xl sm:text-5xl lg:text-6xl" : "text-2xl sm:text-3xl"}`}>
-            {display}
-          </span>
+          {isEditing ? (
+            <div ref={editContainerRef} className="flex items-center gap-1" onKeyDown={handleEditKeyDown}>
+              <input
+                aria-label="edit hours"
+                autoFocus
+                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${solo ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl" : "w-8 sm:w-12 text-2xl sm:text-3xl"}`}
+                value={editHours}
+                onChange={(e) => setEditHours(filterNumeric(e.target.value))}
+              />
+              <span className={`font-bold text-gray-800 font-mono ${solo ? "text-3xl sm:text-5xl lg:text-6xl" : "text-2xl sm:text-3xl"}`}>:</span>
+              <input
+                aria-label="edit minutes"
+                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${solo ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl" : "w-8 sm:w-12 text-2xl sm:text-3xl"}`}
+                value={editMinutes}
+                onChange={(e) => setEditMinutes(filterNumeric(e.target.value))}
+              />
+              <span className={`font-bold text-gray-800 font-mono ${solo ? "text-3xl sm:text-5xl lg:text-6xl" : "text-2xl sm:text-3xl"}`}>:</span>
+              <input
+                aria-label="edit seconds"
+                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${solo ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl" : "w-8 sm:w-12 text-2xl sm:text-3xl"}`}
+                value={editSeconds}
+                onChange={(e) => setEditSeconds(filterNumeric(e.target.value))}
+              />
+            </div>
+          ) : (
+            <span
+              className={`font-bold text-gray-800 tracking-widest font-mono ${solo ? "text-3xl sm:text-5xl lg:text-6xl" : "text-2xl sm:text-3xl"} ${status === "idle" ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+              onClick={startEditing}
+              role={status === "idle" ? "button" : undefined}
+              aria-label={status === "idle" ? "Click to edit time" : undefined}
+            >
+              {display}
+            </span>
+          )}
         </div>
       </div>
 

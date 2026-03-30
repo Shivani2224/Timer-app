@@ -515,4 +515,111 @@ describe("Focus Timer", () => {
       expect(screen.getByText("00:02:00")).toBeInTheDocument();
     });
   });
+
+  describe("Inline Edit", () => {
+    it("should show inline inputs when clicking time display in idle state", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+
+      expect(screen.getByLabelText(/edit hours/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/edit minutes/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/edit seconds/i)).toBeInTheDocument();
+    });
+
+    it("should not show inline inputs when timer is running", () => {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /start/i }));
+
+      expect(screen.queryByRole("button", { name: /click to edit time/i })).not.toBeInTheDocument();
+    });
+
+    it("should save new value on Enter", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+
+      const minutesInput = screen.getByLabelText(/edit minutes/i);
+      await user.clear(minutesInput);
+      await user.type(minutesInput, "5");
+      await user.keyboard("{Enter}");
+
+      expect(screen.getByText("00:05:00")).toBeInTheDocument();
+    });
+
+    it("should revert on Escape", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+
+      const minutesInput = screen.getByLabelText(/edit minutes/i);
+      await user.clear(minutesInput);
+      await user.type(minutesInput, "99");
+      await user.keyboard("{Escape}");
+
+      expect(screen.getByText("00:02:00")).toBeInTheDocument();
+    });
+
+    it("should save on blur (clicking outside)", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+
+      const minutesInput = screen.getByLabelText(/edit minutes/i);
+      await user.clear(minutesInput);
+      await user.type(minutesInput, "10");
+
+      await user.click(document.body);
+
+      expect(screen.getByText("00:10:00")).toBeInTheDocument();
+    });
+
+    it("should only accept numeric values", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+
+      const minutesInput = screen.getByLabelText(/edit minutes/i);
+      await user.clear(minutesInput);
+      await user.type(minutesInput, "abc");
+
+      expect(minutesInput).toHaveValue("");
+    });
+
+    it("should revert if all fields are zero", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+
+      const hoursInput = screen.getByLabelText(/edit hours/i);
+      const minutesInput = screen.getByLabelText(/edit minutes/i);
+      const secondsInput = screen.getByLabelText(/edit seconds/i);
+      await user.clear(hoursInput);
+      await user.clear(minutesInput);
+      await user.clear(secondsInput);
+      await user.keyboard("{Enter}");
+
+      expect(screen.getByText("00:02:00")).toBeInTheDocument();
+    });
+
+    it("should not be editable when timer is paused", () => {
+      vi.useFakeTimers();
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /start/i }));
+      act(() => { vi.advanceTimersByTime(1000); });
+      fireEvent.click(screen.getByRole("button", { name: /pause/i }));
+
+      expect(screen.queryByRole("button", { name: /click to edit time/i })).not.toBeInTheDocument();
+
+      vi.useRealTimers();
+    });
+  });
 });
