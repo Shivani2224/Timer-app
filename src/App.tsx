@@ -254,6 +254,7 @@ export default function App() {
 
       {editingId && (
         <EditTimer
+          initialTime={timers.find((t) => t.id === editingId)?.initialTime ?? 0}
           onSave={(totalSeconds) => {
             updateTimer(editingId, {
               timeLeft: totalSeconds,

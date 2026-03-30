@@ -36,6 +36,17 @@ describe("Focus Timer", () => {
       expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
 
+    it("should pre-fill fields with current timer value", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+
+      await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      expect(screen.getByLabelText(/hours/i)).toHaveValue("0");
+      expect(screen.getByLabelText(/minutes/i)).toHaveValue("2");
+      expect(screen.getByLabelText(/seconds/i)).toHaveValue("0");
+    });
+
     it("should only accept numbers, not letters or special characters", async () => {
       const user = userEvent.setup();
       render(<App />);
@@ -109,6 +120,10 @@ describe("Focus Timer", () => {
 
       await user.click(screen.getByRole("button", { name: /^edit$/i }));
 
+      await user.clear(screen.getByLabelText(/hours/i));
+      await user.clear(screen.getByLabelText(/minutes/i));
+      await user.clear(screen.getByLabelText(/seconds/i));
+
       expect(screen.getByText("Enter a value in at least one field")).toBeInTheDocument();
     });
 
@@ -117,6 +132,10 @@ describe("Focus Timer", () => {
       render(<App />);
 
       await user.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      await user.clear(screen.getByLabelText(/hours/i));
+      await user.clear(screen.getByLabelText(/minutes/i));
+      await user.clear(screen.getByLabelText(/seconds/i));
 
       await user.click(screen.getByRole("button", { name: /save/i }));
 
