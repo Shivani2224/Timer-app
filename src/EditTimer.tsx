@@ -1,14 +1,15 @@
 import { useState } from "react";
 
 interface EditTimerProps {
+  initialTime: number;
   onSave: (totalSeconds: number) => void;
   onClose: () => void;
 }
 
-export default function EditTimer({ onSave, onClose }: EditTimerProps) {
-  const [hours, setHours] = useState("");
-  const [minutes, setMinutes] = useState("");
-  const [seconds, setSeconds] = useState("");
+export default function EditTimer({ initialTime, onSave, onClose }: EditTimerProps) {
+  const [hours, setHours] = useState(String(Math.floor(initialTime / 3600)));
+  const [minutes, setMinutes] = useState(String(Math.floor((initialTime % 3600) / 60)));
+  const [seconds, setSeconds] = useState(String(initialTime % 60));
 
   function handleChange(value: string): string {
     return value.replace(/[^0-9]/g, "");
