@@ -122,6 +122,44 @@ export default function App() {
     setTimers((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.code !== "Space") return;
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      e.preventDefault();
+
+      setTimers((prev) => {
+        const running = prev.find((t) => t.status === "running");
+        if (running) {
+          return prev.map((t) =>
+            t.id === running.id ? { ...t, status: "paused" as const } : t
+          );
+        }
+
+        const paused = prev.find((t) => t.status === "paused");
+        if (paused) {
+          return prev.map((t) =>
+            t.id === paused.id ? { ...t, status: "running" as const } : t
+          );
+        }
+
+        const idle = prev.find((t) => t.status === "idle" && t.timeLeft > 0);
+        if (idle) {
+          return prev.map((t) =>
+            t.id === idle.id ? { ...t, status: "running" as const } : t
+          );
+        }
+
+        return prev;
+      });
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleAddTimer = useCallback(() => {
     setTimers((prev) => [...prev, createTimer()]);
   }, []);
