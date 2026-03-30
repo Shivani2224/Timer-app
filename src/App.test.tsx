@@ -622,4 +622,64 @@ describe("Focus Timer", () => {
       vi.useRealTimers();
     });
   });
+
+  describe("Space Keyboard Shortcut", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should start an idle timer when Space is pressed", () => {
+      render(<App />);
+
+      fireEvent.keyDown(window, { code: "Space" });
+
+      act(() => { vi.advanceTimersByTime(1000); });
+
+      expect(screen.getByText("00:01:59")).toBeInTheDocument();
+    });
+
+    it("should pause a running timer when Space is pressed", () => {
+      render(<App />);
+
+      fireEvent.keyDown(window, { code: "Space" });
+
+      act(() => { vi.advanceTimersByTime(3000); });
+
+      fireEvent.keyDown(window, { code: "Space" });
+
+      act(() => { vi.advanceTimersByTime(5000); });
+
+      expect(screen.getByText("00:01:57")).toBeInTheDocument();
+    });
+
+    it("should resume a paused timer when Space is pressed", () => {
+      render(<App />);
+
+      fireEvent.keyDown(window, { code: "Space" });
+      act(() => { vi.advanceTimersByTime(3000); });
+
+      fireEvent.keyDown(window, { code: "Space" });
+
+      fireEvent.keyDown(window, { code: "Space" });
+      act(() => { vi.advanceTimersByTime(2000); });
+
+      expect(screen.getByText("00:01:55")).toBeInTheDocument();
+    });
+
+    it("should not trigger when an input field is focused", async () => {
+      render(<App />);
+
+      fireEvent.click(screen.getByRole("button", { name: /^edit$/i }));
+
+      const minutesInput = screen.getByLabelText(/minutes/i);
+      fireEvent.keyDown(minutesInput, { code: "Space" });
+
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      expect(screen.getByText("00:02:00")).toBeInTheDocument();
+    });
+  });
 });
