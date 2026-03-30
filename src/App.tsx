@@ -112,6 +112,12 @@ export default function App() {
     },
     []
   );
+  const handleInlineEdit = useCallback(
+    (id: string, totalSeconds: number) => {
+      updateTimer(id, { timeLeft: totalSeconds, initialTime: totalSeconds });
+    },
+    [updateTimer]
+  );
   const handleDelete = useCallback((id: string) => {
     setTimers((prev) => prev.filter((t) => t.id !== id));
   }, []);
@@ -142,6 +148,7 @@ export default function App() {
               onStop={handleStop}
               onReset={handleReset}
               onEdit={(id) => setEditingId(id)}
+              onInlineEdit={handleInlineEdit}
               onDelete={handleDelete}
               canDelete={false}
               solo
@@ -171,6 +178,7 @@ export default function App() {
               onStop={handleStop}
               onReset={handleReset}
               onEdit={(id) => setEditingId(id)}
+              onInlineEdit={handleInlineEdit}
               onDelete={handleDelete}
               canDelete
             />
