@@ -6,6 +6,7 @@ export type TimerStatus = "idle" | "running" | "paused";
 
 export interface TimerData {
   id: string;
+  label: string;
   timeLeft: number;
   initialTime: number;
   status: TimerStatus;
@@ -22,6 +23,7 @@ interface TimerCardProps {
   onEdit: (id: string) => void;
   onInlineEdit: (id: string, totalSeconds: number) => void;
   onDelete: (id: string) => void;
+  onLabelChange: (id: string, label: string) => void;
   canDelete: boolean;
   solo?: boolean;
 }
@@ -36,6 +38,7 @@ export default function TimerCard({
   onEdit,
   onInlineEdit,
   onDelete,
+  onLabelChange,
   canDelete,
   solo = false,
 }: TimerCardProps) {
@@ -48,7 +51,8 @@ export default function TimerCard({
   const [editMinutes, setEditMinutes] = useState("");
   const [editSeconds, setEditSeconds] = useState("");
   const editContainerRef = useRef<HTMLDivElement | null>(null);
-
+  const [isEditingLabel, setIsEditingLabel] = useState(false);
+  const [editLabel, setEditLabel] = useState("");
   const progress =
     status === "idle" ? 1 : initialTime > 0 ? timeLeft / initialTime : 0;
   const hours = Math.floor(timeLeft / 3600);
@@ -83,6 +87,23 @@ export default function TimerCard({
     setEditMinutes(String(minutes));
     setEditSeconds(String(seconds));
     setIsEditing(true);
+  }
+
+  function startLabelEdit() {
+    setEditLabel(timer.label);
+    setIsEditingLabel(true);
+  }
+
+  function saveLabelEdit() {
+    const trimmed = editLabel.trim();
+    if (trimmed) {
+      onLabelChange(id, trimmed);
+    }
+    setIsEditingLabel(false);
+  }
+
+  function cancelLabelEdit() {
+    setIsEditingLabel(false);
   }
 
   function saveEdit() {
@@ -123,7 +144,10 @@ export default function TimerCard({
   useEffect(() => {
     if (!isEditing) return;
     function handleClickOutside(e: MouseEvent) {
-      if (editContainerRef.current && !editContainerRef.current.contains(e.target as Node)) {
+      if (
+        editContainerRef.current &&
+        !editContainerRef.current.contains(e.target as Node)
+      ) {
         saveEdit();
       }
     }
@@ -144,7 +168,17 @@ export default function TimerCard({
         onStop={() => onStop(id)}
       />
     );
-  }, [isPip, display, progress, ringColor, status, id, onPause, onResume, onStop]);
+  }, [
+    isPip,
+    display,
+    progress,
+    ringColor,
+    status,
+    id,
+    onPause,
+    onResume,
+    onStop,
+  ]);
 
   async function openPip() {
     if (!supportsPip) return;
@@ -175,7 +209,9 @@ export default function TimerCard({
           } else if (sheet.cssRules) {
             const style = pipWindow.document.createElement("style");
             for (const rule of sheet.cssRules) {
-              style.appendChild(pipWindow.document.createTextNode(rule.cssText));
+              style.appendChild(
+                pipWindow.document.createTextNode(rule.cssText)
+              );
             }
             pipWindow.document.head.appendChild(style);
           }
@@ -220,7 +256,13 @@ export default function TimerCard({
   }
 
   return (
-    <div className={`relative rounded-2xl sm:rounded-3xl border border-glass-border bg-glass backdrop-blur-xl shadow-2xl flex flex-col items-center ${solo ? "p-5 sm:p-8 lg:p-10 gap-4 sm:gap-6 lg:gap-8" : "p-5 sm:p-6 gap-3 sm:gap-4"}`}>
+    <div
+      className={`relative rounded-2xl sm:rounded-3xl border border-glass-border bg-glass backdrop-blur-xl shadow-2xl flex flex-col items-center ${
+        solo
+          ? "p-5 sm:p-8 lg:p-10 gap-4 sm:gap-6 lg:gap-8"
+          : "p-5 sm:p-6 gap-3 sm:gap-4"
+      }`}
+    >
       <div className="flex w-full justify-between items-center">
         <div>
           {supportsPip && (
@@ -229,9 +271,27 @@ export default function TimerCard({
               title="Pop out timer"
               className="p-1.5 text-muted hover:text-primary transition-colors cursor-pointer"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <rect x="2" y="3" width="20" height="14" rx="2" />
-                <rect x="12" y="9" width="8" height="8" rx="1" fill="currentColor" opacity="0.2" stroke="currentColor" />
+                <rect
+                  x="12"
+                  y="9"
+                  width="8"
+                  height="8"
+                  rx="1"
+                  fill="currentColor"
+                  opacity="0.2"
+                  stroke="currentColor"
+                />
               </svg>
             </button>
           )}
@@ -242,18 +302,61 @@ export default function TimerCard({
             title="Remove timer"
             className="p-1.5 text-muted hover:text-danger transition-colors cursor-pointer"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         )}
       </div>
+      <div>
+        {isEditingLabel ? (
+          <input
+            aria-label="edit timer label"
+            autoFocus
+            maxLength={20}
+            className="text-center text-sm text-muted bg-transparent border-b-2 border-primary outline-none px-2 py-1"
+            value={editLabel}
+            onChange={(e) => setEditLabel(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveLabelEdit();
+              if (e.key === "Escape") cancelLabelEdit();
+            }}
+            onBlur={saveLabelEdit}
+          />
+        ) : (
+          <span
+            className="text-sm text-muted cursor-pointer hover:text-primary transition-colors"
+            onClick={startLabelEdit}
+            role="button"
+            aria-label="Click to edit label"
+          >
+            {timer.label}
+          </span>
+        )}
+      </div>
 
-      <div className={`relative flex items-center justify-center ${solo ? "w-52 h-52 sm:w-72 sm:h-72 lg:w-96 lg:h-96" : "w-40 h-40 sm:w-48 sm:h-48"}`}>
+      <div
+        className={`relative flex items-center justify-center ${
+          solo
+            ? "w-52 h-52 sm:w-72 sm:h-72 lg:w-96 lg:h-96"
+            : "w-40 h-40 sm:w-48 sm:h-48"
+        }`}
+      >
         <svg
           viewBox={`0 0 ${svgSize} ${svgSize}`}
-          className={`w-full h-full ${status === "running" ? "progress-ring-animated" : ""}`}
+          className={`w-full h-full ${
+            status === "running" ? "progress-ring-animated" : ""
+          }`}
         >
           <circle
             cx={radius + stroke}
@@ -283,32 +386,72 @@ export default function TimerCard({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {isEditing ? (
-            <div ref={editContainerRef} className="flex items-center gap-1" onKeyDown={handleEditKeyDown}>
+            <div
+              ref={editContainerRef}
+              className="flex items-center gap-1"
+              onKeyDown={handleEditKeyDown}
+            >
               <input
                 aria-label="edit hours"
                 autoFocus
-                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${solo ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl" : "w-8 sm:w-12 text-2xl sm:text-3xl"}`}
+                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${
+                  solo
+                    ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl"
+                    : "w-8 sm:w-12 text-2xl sm:text-3xl"
+                }`}
                 value={editHours}
                 onChange={(e) => setEditHours(filterNumeric(e.target.value))}
               />
-              <span className={`font-bold text-gray-800 font-mono ${solo ? "text-3xl sm:text-5xl lg:text-6xl" : "text-2xl sm:text-3xl"}`}>:</span>
+              <span
+                className={`font-bold text-gray-800 font-mono ${
+                  solo
+                    ? "text-3xl sm:text-5xl lg:text-6xl"
+                    : "text-2xl sm:text-3xl"
+                }`}
+              >
+                :
+              </span>
               <input
                 aria-label="edit minutes"
-                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${solo ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl" : "w-8 sm:w-12 text-2xl sm:text-3xl"}`}
+                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${
+                  solo
+                    ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl"
+                    : "w-8 sm:w-12 text-2xl sm:text-3xl"
+                }`}
                 value={editMinutes}
                 onChange={(e) => setEditMinutes(filterNumeric(e.target.value))}
               />
-              <span className={`font-bold text-gray-800 font-mono ${solo ? "text-3xl sm:text-5xl lg:text-6xl" : "text-2xl sm:text-3xl"}`}>:</span>
+              <span
+                className={`font-bold text-gray-800 font-mono ${
+                  solo
+                    ? "text-3xl sm:text-5xl lg:text-6xl"
+                    : "text-2xl sm:text-3xl"
+                }`}
+              >
+                :
+              </span>
               <input
                 aria-label="edit seconds"
-                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${solo ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl" : "w-8 sm:w-12 text-2xl sm:text-3xl"}`}
+                className={`bg-transparent text-center font-bold text-gray-800 font-mono border-b-2 border-primary outline-none ${
+                  solo
+                    ? "w-12 sm:w-16 lg:w-20 text-3xl sm:text-5xl lg:text-6xl"
+                    : "w-8 sm:w-12 text-2xl sm:text-3xl"
+                }`}
                 value={editSeconds}
                 onChange={(e) => setEditSeconds(filterNumeric(e.target.value))}
               />
             </div>
           ) : (
             <span
-              className={`font-bold text-gray-800 tracking-widest font-mono ${solo ? "text-3xl sm:text-5xl lg:text-6xl" : "text-2xl sm:text-3xl"} ${status === "idle" ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+              className={`font-bold text-gray-800 tracking-widest font-mono ${
+                solo
+                  ? "text-3xl sm:text-5xl lg:text-6xl"
+                  : "text-2xl sm:text-3xl"
+              } ${
+                status === "idle"
+                  ? "cursor-pointer hover:text-primary transition-colors"
+                  : ""
+              }`}
               onClick={startEditing}
               role={status === "idle" ? "button" : undefined}
               aria-label={status === "idle" ? "Click to edit time" : undefined}
@@ -385,7 +528,8 @@ export default function TimerCard({
           />
         </svg>
         <span>
-          Sessions: <span className="text-gray-800 font-semibold">{sessions}</span>
+          Sessions:{" "}
+          <span className="text-gray-800 font-semibold">{sessions}</span>
         </span>
       </div>
     </div>
