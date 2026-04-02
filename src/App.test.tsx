@@ -83,7 +83,9 @@ describe("Focus Timer", () => {
       await user.clear(secondsInput);
       await user.type(secondsInput, "75");
 
-      expect(screen.getByText("Minutes and seconds cannot be more than 59")).toBeInTheDocument();
+      expect(
+        screen.getByText("Minutes and seconds cannot be more than 59")
+      ).toBeInTheDocument();
     });
 
     it("should show error when minutes exceed 59", async () => {
@@ -96,7 +98,9 @@ describe("Focus Timer", () => {
       await user.clear(minutesInput);
       await user.type(minutesInput, "75");
 
-      expect(screen.getByText("Minutes and seconds cannot be more than 59")).toBeInTheDocument();
+      expect(
+        screen.getByText("Minutes and seconds cannot be more than 59")
+      ).toBeInTheDocument();
     });
 
     it("should not save when minutes or seconds exceed 59", async () => {
@@ -124,7 +128,9 @@ describe("Focus Timer", () => {
       await user.clear(screen.getByLabelText(/minutes/i));
       await user.clear(screen.getByLabelText(/seconds/i));
 
-      expect(screen.getByText("Enter a value in at least one field")).toBeInTheDocument();
+      expect(
+        screen.getByText("Enter a value in at least one field")
+      ).toBeInTheDocument();
     });
 
     it("should not save when all fields are zero", async () => {
@@ -152,7 +158,9 @@ describe("Focus Timer", () => {
       await user.clear(hoursInput);
       await user.type(hoursInput, "100");
 
-      expect(screen.getByText("Hours cannot be more than 99")).toBeInTheDocument();
+      expect(
+        screen.getByText("Hours cannot be more than 99")
+      ).toBeInTheDocument();
     });
 
     it("should not save when hours exceed 99", async () => {
@@ -180,12 +188,16 @@ describe("Focus Timer", () => {
       await user.clear(hoursInput);
       await user.type(hoursInput, "100");
 
-      expect(screen.getByText("Hours cannot be more than 99")).toBeInTheDocument();
+      expect(
+        screen.getByText("Hours cannot be more than 99")
+      ).toBeInTheDocument();
 
       await user.clear(hoursInput);
       await user.type(hoursInput, "50");
 
-      expect(screen.queryByText("Hours cannot be more than 99")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Hours cannot be more than 99")
+      ).not.toBeInTheDocument();
     });
 
     it("should clear error when value is corrected to 59 or below", async () => {
@@ -198,12 +210,16 @@ describe("Focus Timer", () => {
       await user.clear(minutesInput);
       await user.type(minutesInput, "75");
 
-      expect(screen.getByText("Minutes and seconds cannot be more than 59")).toBeInTheDocument();
+      expect(
+        screen.getByText("Minutes and seconds cannot be more than 59")
+      ).toBeInTheDocument();
 
       await user.clear(minutesInput);
       await user.type(minutesInput, "30");
 
-      expect(screen.queryByText("Minutes and seconds cannot be more than 59")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Minutes and seconds cannot be more than 59")
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -212,6 +228,51 @@ describe("Focus Timer", () => {
       render(<App />);
       expect(screen.getByText("Sessions:")).toBeInTheDocument();
       expect(screen.getByText("0")).toBeInTheDocument();
+    });
+  });
+
+  describe("Timer Label", () => {
+    it("should display default label ", () => {
+      render(<App />);
+      expect(screen.getByText(/Timer \d+/)).toBeInTheDocument();
+    });
+    it("should become editable when clicked", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+      await user.click(
+        screen.getByRole("button", { name: /click to edit label/i })
+      );
+      expect(screen.getByLabelText(/edit timer label/i)).toBeInTheDocument();
+    });
+    it("should save new label on Enter", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+      const label = screen.getByRole("button", {
+        name: /click to edit label/i,
+      });
+      await user.click(label);
+      const input = screen.getByLabelText(/edit timer label/i);
+      await user.clear(input);
+      await user.type(input, "work");
+      await user.keyboard("{Enter}");
+      expect(screen.getByText("work")).toBeInTheDocument();
+    });
+    it("should save new label on Escape", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+      const label = screen.getByRole("button", {
+        name: /click to edit label/i,
+      });
+      const originalText = label.textContent;
+      await user.click(label);
+      const input = screen.getByLabelText(/edit timer label/i);
+      await user.clear(input);
+
+      await user.type(input, "Something Else");
+
+      await user.keyboard("{Escape}");
+
+      expect(screen.getByText(originalText!)).toBeInTheDocument();
     });
   });
 
@@ -462,14 +523,9 @@ describe("Focus Timer", () => {
     it("should show delete button only when multiple timers exist", () => {
       render(<App />);
 
-
-      expect(
-        screen.queryByTitle("Remove timer")
-      ).not.toBeInTheDocument();
-
+      expect(screen.queryByTitle("Remove timer")).not.toBeInTheDocument();
 
       fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
-
 
       const deleteButtons = screen.getAllByTitle("Remove timer");
       expect(deleteButtons.length).toBeGreaterThan(0);
@@ -478,10 +534,8 @@ describe("Focus Timer", () => {
     it("should remove a timer when delete is clicked", () => {
       render(<App />);
 
-
       fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
       expect(screen.getAllByText("00:02:00")).toHaveLength(2);
-
 
       fireEvent.click(screen.getAllByTitle("Remove timer")[0]);
       expect(screen.getAllByText("00:02:00")).toHaveLength(1);
@@ -492,9 +546,7 @@ describe("Focus Timer", () => {
 
       render(<App />);
 
-
       fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
-
 
       const startButtons = screen.getAllByRole("button", { name: /start/i });
       fireEvent.click(startButtons[0]);
@@ -502,7 +554,6 @@ describe("Focus Timer", () => {
       act(() => {
         vi.advanceTimersByTime(5000);
       });
-
 
       expect(screen.getByText("00:01:55")).toBeInTheDocument();
       expect(screen.getByText("00:02:00")).toBeInTheDocument();
@@ -514,21 +565,17 @@ describe("Focus Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-
       await user.click(screen.getByRole("button", { name: /add timer/i }));
-
 
       const editButtons = screen.getAllByRole("button", { name: /^edit$/i });
       await user.click(editButtons[0]);
 
       expect(screen.getByRole("dialog")).toBeInTheDocument();
 
-
       const minutesInput = screen.getByLabelText(/minutes/i);
       await user.clear(minutesInput);
       await user.type(minutesInput, "5");
       await user.click(screen.getByRole("button", { name: /save/i }));
-
 
       expect(screen.getByText("00:05:00")).toBeInTheDocument();
       expect(screen.getByText("00:02:00")).toBeInTheDocument();
@@ -540,7 +587,9 @@ describe("Focus Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+      await user.click(
+        screen.getByRole("button", { name: /click to edit time/i })
+      );
 
       expect(screen.getByLabelText(/edit hours/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/edit minutes/i)).toBeInTheDocument();
@@ -552,14 +601,18 @@ describe("Focus Timer", () => {
 
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
 
-      expect(screen.queryByRole("button", { name: /click to edit time/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /click to edit time/i })
+      ).not.toBeInTheDocument();
     });
 
     it("should save new value on Enter", async () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+      await user.click(
+        screen.getByRole("button", { name: /click to edit time/i })
+      );
 
       const minutesInput = screen.getByLabelText(/edit minutes/i);
       await user.clear(minutesInput);
@@ -573,7 +626,9 @@ describe("Focus Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+      await user.click(
+        screen.getByRole("button", { name: /click to edit time/i })
+      );
 
       const minutesInput = screen.getByLabelText(/edit minutes/i);
       await user.clear(minutesInput);
@@ -587,7 +642,9 @@ describe("Focus Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+      await user.click(
+        screen.getByRole("button", { name: /click to edit time/i })
+      );
 
       const minutesInput = screen.getByLabelText(/edit minutes/i);
       await user.clear(minutesInput);
@@ -602,7 +659,9 @@ describe("Focus Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+      await user.click(
+        screen.getByRole("button", { name: /click to edit time/i })
+      );
 
       const minutesInput = screen.getByLabelText(/edit minutes/i);
       await user.clear(minutesInput);
@@ -615,7 +674,9 @@ describe("Focus Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /click to edit time/i }));
+      await user.click(
+        screen.getByRole("button", { name: /click to edit time/i })
+      );
 
       const hoursInput = screen.getByLabelText(/edit hours/i);
       const minutesInput = screen.getByLabelText(/edit minutes/i);
@@ -633,10 +694,14 @@ describe("Focus Timer", () => {
       render(<App />);
 
       fireEvent.click(screen.getByRole("button", { name: /start/i }));
-      act(() => { vi.advanceTimersByTime(1000); });
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
       fireEvent.click(screen.getByRole("button", { name: /pause/i }));
 
-      expect(screen.queryByRole("button", { name: /click to edit time/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /click to edit time/i })
+      ).not.toBeInTheDocument();
 
       vi.useRealTimers();
     });
@@ -656,7 +721,9 @@ describe("Focus Timer", () => {
 
       fireEvent.keyDown(window, { code: "Space" });
 
-      act(() => { vi.advanceTimersByTime(1000); });
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
 
       expect(screen.getByText("00:01:59")).toBeInTheDocument();
     });
@@ -666,11 +733,15 @@ describe("Focus Timer", () => {
 
       fireEvent.keyDown(window, { code: "Space" });
 
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
 
       fireEvent.keyDown(window, { code: "Space" });
 
-      act(() => { vi.advanceTimersByTime(5000); });
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
 
       expect(screen.getByText("00:01:57")).toBeInTheDocument();
     });
@@ -679,12 +750,16 @@ describe("Focus Timer", () => {
       render(<App />);
 
       fireEvent.keyDown(window, { code: "Space" });
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
 
       fireEvent.keyDown(window, { code: "Space" });
 
       fireEvent.keyDown(window, { code: "Space" });
-      act(() => { vi.advanceTimersByTime(2000); });
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
 
       expect(screen.getByText("00:01:55")).toBeInTheDocument();
     });
