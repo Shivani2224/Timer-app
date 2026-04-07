@@ -117,7 +117,6 @@ export default function App() {
     [updateTimer]
   );
 
-
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.code !== "Space") return;
@@ -191,6 +190,7 @@ export default function App() {
           </div>
           <button
             onClick={handleAddTimer}
+            aria-label="Add new timer"
             className="mt-4 sm:mt-6 px-5 sm:px-8 py-2.5 sm:py-3 bg-gray-100 hover:bg-gray-200 text-muted hover:text-gray-800 text-sm sm:text-base font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 cursor-pointer flex items-center gap-2"
           >
             <svg
@@ -230,7 +230,8 @@ export default function App() {
           ))}
 
           <button
-            onClick={handleAddTimer}
+              onClick={handleAddTimer}
+              aria-label="Add Timer button"
             className="rounded-2xl sm:rounded-3xl border-2 border-dashed border-gray-300 hover:border-primary bg-white/30 hover:bg-white/50 backdrop-blur-xl p-5 sm:p-6 flex flex-col items-center justify-center gap-2 min-h-50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
           >
             <svg
@@ -275,5 +276,3 @@ export default function App() {
     </div>
   );
 }
-
-
