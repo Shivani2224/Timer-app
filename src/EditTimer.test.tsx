@@ -202,5 +202,35 @@ describe("Edit Timer", () => {
     expect(
       screen.queryByText("Minutes and seconds cannot be more than 59")
     ).not.toBeInTheDocument();
+  
   });
+
+  it("should close modal on Escape key", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("should close modal on backdrop click", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
+    const dialog = screen.getByRole("dialog");
+    await user.click(dialog);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+it("should not close modal when clicking inside content", async () => {
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(screen.getByRole("button", { name: /edit button/i }));
+  await user.click(screen.getByLabelText(/hours/i));
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+});
+
+
+
 });
