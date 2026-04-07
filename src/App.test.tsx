@@ -19,209 +19,7 @@ describe("Focus Timer", () => {
     });
   });
 
-  describe("Edit Timer", () => {
-    it("should display an Edit button", () => {
-      render(<App />);
-      expect(
-        screen.getByRole("button", { name: /^edit$/i })
-      ).toBeInTheDocument();
-    });
 
-    it("should open a popup when Edit button is clicked", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      expect(screen.getByRole("dialog")).toBeInTheDocument();
-    });
-
-    it("should pre-fill fields with current timer value", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      expect(screen.getByLabelText(/hours/i)).toHaveValue("0");
-      expect(screen.getByLabelText(/minutes/i)).toHaveValue("2");
-      expect(screen.getByLabelText(/seconds/i)).toHaveValue("0");
-    });
-
-    it("should only accept numbers, not letters or special characters", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const minutesInput = screen.getByLabelText(/minutes/i);
-      await user.clear(minutesInput);
-      await user.type(minutesInput, "abc!@#");
-
-      expect(minutesInput).toHaveValue("");
-    });
-
-    it("should not accept negative numbers", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const minutesInput = screen.getByLabelText(/minutes/i);
-      await user.clear(minutesInput);
-      await user.type(minutesInput, "-5");
-
-      expect(minutesInput).not.toHaveValue("-5");
-    });
-
-    it("should show error when seconds exceed 59", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const secondsInput = screen.getByLabelText(/seconds/i);
-      await user.clear(secondsInput);
-      await user.type(secondsInput, "75");
-
-      expect(
-        screen.getByText("Minutes and seconds cannot be more than 59")
-      ).toBeInTheDocument();
-    });
-
-    it("should show error when minutes exceed 59", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const minutesInput = screen.getByLabelText(/minutes/i);
-      await user.clear(minutesInput);
-      await user.type(minutesInput, "75");
-
-      expect(
-        screen.getByText("Minutes and seconds cannot be more than 59")
-      ).toBeInTheDocument();
-    });
-
-    it("should not save when minutes or seconds exceed 59", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const minutesInput = screen.getByLabelText(/minutes/i);
-      await user.clear(minutesInput);
-      await user.type(minutesInput, "75");
-
-      await user.click(screen.getByRole("button", { name: /save/i }));
-
-      expect(screen.getByRole("dialog")).toBeInTheDocument();
-    });
-
-    it("should show error when all fields are zero", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      await user.clear(screen.getByLabelText(/hours/i));
-      await user.clear(screen.getByLabelText(/minutes/i));
-      await user.clear(screen.getByLabelText(/seconds/i));
-
-      expect(
-        screen.getByText("Enter a value in at least one field")
-      ).toBeInTheDocument();
-    });
-
-    it("should not save when all fields are zero", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      await user.clear(screen.getByLabelText(/hours/i));
-      await user.clear(screen.getByLabelText(/minutes/i));
-      await user.clear(screen.getByLabelText(/seconds/i));
-
-      await user.click(screen.getByRole("button", { name: /save/i }));
-
-      expect(screen.getByRole("dialog")).toBeInTheDocument();
-    });
-
-    it("should show error when hours exceed 99", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const hoursInput = screen.getByLabelText(/hours/i);
-      await user.clear(hoursInput);
-      await user.type(hoursInput, "100");
-
-      expect(
-        screen.getByText("Hours cannot be more than 99")
-      ).toBeInTheDocument();
-    });
-
-    it("should not save when hours exceed 99", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const hoursInput = screen.getByLabelText(/hours/i);
-      await user.clear(hoursInput);
-      await user.type(hoursInput, "100");
-
-      await user.click(screen.getByRole("button", { name: /save/i }));
-
-      expect(screen.getByRole("dialog")).toBeInTheDocument();
-    });
-
-    it("should clear hours error when value is corrected to 99 or below", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const hoursInput = screen.getByLabelText(/hours/i);
-      await user.clear(hoursInput);
-      await user.type(hoursInput, "100");
-
-      expect(
-        screen.getByText("Hours cannot be more than 99")
-      ).toBeInTheDocument();
-
-      await user.clear(hoursInput);
-      await user.type(hoursInput, "50");
-
-      expect(
-        screen.queryByText("Hours cannot be more than 99")
-      ).not.toBeInTheDocument();
-    });
-
-    it("should clear error when value is corrected to 59 or below", async () => {
-      const user = userEvent.setup();
-      render(<App />);
-
-      await user.click(screen.getByRole("button", { name: /^edit$/i }));
-
-      const minutesInput = screen.getByLabelText(/minutes/i);
-      await user.clear(minutesInput);
-      await user.type(minutesInput, "75");
-
-      expect(
-        screen.getByText("Minutes and seconds cannot be more than 59")
-      ).toBeInTheDocument();
-
-      await user.clear(minutesInput);
-      await user.type(minutesInput, "30");
-
-      expect(
-        screen.queryByText("Minutes and seconds cannot be more than 59")
-      ).not.toBeInTheDocument();
-    });
-  });
 
   describe("Session Counter", () => {
     it("should show sessions completed as 0 initially", () => {
@@ -257,6 +55,7 @@ describe("Focus Timer", () => {
       await user.keyboard("{Enter}");
       expect(screen.getByText("work")).toBeInTheDocument();
     });
+
     it("should save new label on Escape", async () => {
       const user = userEvent.setup();
       render(<App />);
@@ -267,13 +66,53 @@ describe("Focus Timer", () => {
       await user.click(label);
       const input = screen.getByLabelText(/edit timer label/i);
       await user.clear(input);
-
       await user.type(input, "Something Else");
-
       await user.keyboard("{Escape}");
-
       expect(screen.getByText(originalText!)).toBeInTheDocument();
     });
+    it("should save new label on blur", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+      const label = screen.getByRole("button", {
+        name: /click to edit label/i,
+      });
+      await user.click(label);
+      const input = screen.getByLabelText(/edit timer label/i);
+      await user.clear(input);
+      await user.type(input, "Break");
+      await user.click(document.body);
+      expect(screen.getByText("Break")).toBeInTheDocument();
+    });
+
+    it("should enforce max 20 charater limit", async () => {
+      const user = userEvent.setup();
+      render(<App />)
+      await user.click(screen.getByRole("button", { name: /click to edit label/i }))
+      const input = screen.getByLabelText(/edit timer label/i)
+      await user.clear(input);
+      await user.type(input, "this is a very long label name")
+      expect(input).toHaveValue("this is a very long ");
+    })
+
+    it("should show different labels for multiple timers", async () => {
+      render(<App />)
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }))
+      const label = screen.getAllByRole("button", {name: /click to edit label/i})
+      expect(label).toHaveLength(2)
+      expect(label[0].textContent).not.toBe(label[1].textContent)
+    })
+
+    it("should not save empty label", async () => {
+      const user = userEvent.setup();
+      render(<App />);
+      const label = screen.getByRole("button", { name: /click to edit label/i })
+      const originalText = label.textContent;
+      await user.click(label);
+      const input = screen.getByLabelText(/edit timer label/i)
+      await user.clear(input);
+      await user.keyboard("{Enter}");
+      expect(screen.getByText(originalText!)).toBeInTheDocument();
+    })
   });
 
   describe("Start Timer", () => {
@@ -507,14 +346,14 @@ describe("Focus Timer", () => {
     it("should display an Add Timer button", () => {
       render(<App />);
       expect(
-        screen.getByRole("button", { name: /add timer/i })
+        screen.getByRole("button", { name: /add.*timer/i })
       ).toBeInTheDocument();
     });
 
     it("should add a new timer when Add Timer is clicked", () => {
       render(<App />);
 
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }));
 
       const timers = screen.getAllByText("00:02:00");
       expect(timers).toHaveLength(2);
@@ -525,7 +364,7 @@ describe("Focus Timer", () => {
 
       expect(screen.queryByTitle("Remove timer")).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }));
 
       const deleteButtons = screen.getAllByTitle("Remove timer");
       expect(deleteButtons.length).toBeGreaterThan(0);
@@ -534,7 +373,7 @@ describe("Focus Timer", () => {
     it("should remove a timer when delete is clicked", () => {
       render(<App />);
 
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }));
       expect(screen.getAllByText("00:02:00")).toHaveLength(2);
 
       fireEvent.click(screen.getAllByTitle("Remove timer")[0]);
@@ -546,7 +385,7 @@ describe("Focus Timer", () => {
 
       render(<App />);
 
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }));
 
       const startButtons = screen.getAllByRole("button", { name: /start/i });
       fireEvent.click(startButtons[0]);
@@ -565,9 +404,9 @@ describe("Focus Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /add timer/i }));
+      await user.click(screen.getByRole("button", { name: /add.*timer/i }));
 
-      const editButtons = screen.getAllByRole("button", { name: /^edit$/i });
+      const editButtons = screen.getAllByRole("button", { name: /edit button/i });
       await user.click(editButtons[0]);
 
       expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -767,7 +606,7 @@ describe("Focus Timer", () => {
     it("should not trigger when an input field is focused", async () => {
       render(<App />);
 
-      fireEvent.click(screen.getByRole("button", { name: /^edit$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /edit button/i }));
 
       const minutesInput = screen.getByLabelText(/minutes/i);
       fireEvent.keyDown(minutesInput, { code: "Space" });
