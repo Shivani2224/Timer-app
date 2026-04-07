@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface EditTimerProps {
   initialTime: number;
@@ -6,9 +6,15 @@ interface EditTimerProps {
   onClose: () => void;
 }
 
-export default function EditTimer({ initialTime, onSave, onClose }: EditTimerProps) {
+export default function EditTimer({
+  initialTime,
+  onSave,
+  onClose,
+}: EditTimerProps) {
   const [hours, setHours] = useState(String(Math.floor(initialTime / 3600)));
-  const [minutes, setMinutes] = useState(String(Math.floor((initialTime % 3600) / 60)));
+  const [minutes, setMinutes] = useState(
+    String(Math.floor((initialTime % 3600) / 60))
+  );
   const [seconds, setSeconds] = useState(String(initialTime % 60));
 
   function handleChange(value: string): string {
@@ -18,8 +24,12 @@ export default function EditTimer({ initialTime, onSave, onClose }: EditTimerPro
   const hoursExceeded = Number(hours) > 99;
   const minutesExceeded = Number(minutes) > 59;
   const secondsExceeded = Number(seconds) > 59;
-  const allZero = (Number(hours) || 0) === 0 && (Number(minutes) || 0) === 0 && (Number(seconds) || 0) === 0;
-  const hasError = hoursExceeded || minutesExceeded || secondsExceeded || allZero;
+  const allZero =
+    (Number(hours) || 0) === 0 &&
+    (Number(minutes) || 0) === 0 &&
+    (Number(seconds) || 0) === 0;
+  const hasError =
+    hoursExceeded || minutesExceeded || secondsExceeded || allZero;
 
   function handleSave() {
     if (hasError) return;
@@ -31,56 +41,95 @@ export default function EditTimer({ initialTime, onSave, onClose }: EditTimerPro
     onSave(totalSeconds);
   }
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div
       role="dialog"
       className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+      onClick={onClose}
     >
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 sm:gap-5 w-full max-w-xs sm:max-w-sm">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-800">Edit Timer</h2>
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-2xl flex flex-col gap-4 sm:gap-5 w-full max-w-xs sm:max-w-sm"
+      onClick={(e)=>e.stopPropagation()}>
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800">
+          Edit Timer
+        </h2>
         <div className="flex gap-3 sm:gap-4 justify-center">
           <div className="flex flex-col items-center gap-1">
-            <label htmlFor="hours" className="text-xs text-muted uppercase tracking-wider">
+            <label
+              htmlFor="hours"
+              className="text-xs text-muted uppercase tracking-wider"
+            >
               Hours
             </label>
             <input
               id="hours"
-              className={`w-16 sm:w-20 bg-gray-50 border rounded-xl px-2 py-2 text-center text-gray-800 text-base sm:text-lg focus:outline-none transition-all ${hoursExceeded ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/25" : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"}`}
+              className={`w-16 sm:w-20 bg-gray-50 border rounded-xl px-2 py-2 text-center text-gray-800 text-base sm:text-lg focus:outline-none transition-all ${
+                hoursExceeded
+                  ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/25"
+                  : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"
+              }`}
               value={hours}
               onChange={(e) => setHours(handleChange(e.target.value))}
             />
           </div>
           <div className="flex flex-col items-center gap-1">
-            <label htmlFor="minutes" className="text-xs text-muted uppercase tracking-wider">
+            <label
+              htmlFor="minutes"
+              className="text-xs text-muted uppercase tracking-wider"
+            >
               Minutes
             </label>
             <input
               id="minutes"
-              className={`w-16 sm:w-20 bg-gray-50 border rounded-xl px-2 py-2 text-center text-gray-800 text-base sm:text-lg focus:outline-none transition-all ${minutesExceeded ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/25" : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"}`}
+              className={`w-16 sm:w-20 bg-gray-50 border rounded-xl px-2 py-2 text-center text-gray-800 text-base sm:text-lg focus:outline-none transition-all ${
+                minutesExceeded
+                  ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/25"
+                  : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"
+              }`}
               value={minutes}
               onChange={(e) => setMinutes(handleChange(e.target.value))}
             />
           </div>
           <div className="flex flex-col items-center gap-1">
-            <label htmlFor="seconds" className="text-xs text-muted uppercase tracking-wider">
+            <label
+              htmlFor="seconds"
+              className="text-xs text-muted uppercase tracking-wider"
+            >
               Seconds
             </label>
             <input
               id="seconds"
-              className={`w-16 sm:w-20 bg-gray-50 border rounded-xl px-2 py-2 text-center text-gray-800 text-base sm:text-lg focus:outline-none transition-all ${secondsExceeded ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/25" : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"}`}
+              className={`w-16 sm:w-20 bg-gray-50 border rounded-xl px-2 py-2 text-center text-gray-800 text-base sm:text-lg focus:outline-none transition-all ${
+                secondsExceeded
+                  ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/25"
+                  : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"
+              }`}
               value={seconds}
               onChange={(e) => setSeconds(handleChange(e.target.value))}
             />
           </div>
         </div>
         {hoursExceeded && (
-          <p className="text-red-500 text-xs text-center">Hours cannot be more than 99</p>
+          <p className="text-red-500 text-xs text-center">
+            Hours cannot be more than 99
+          </p>
         )}
         {(minutesExceeded || secondsExceeded) && (
-          <p className="text-red-500 text-xs text-center">Minutes and seconds cannot be more than 59</p>
+          <p className="text-red-500 text-xs text-center">
+            Minutes and seconds cannot be more than 59
+          </p>
         )}
         {allZero && (
-          <p className="text-red-500 text-xs text-center">Enter a value in at least one field</p>
+          <p className="text-red-500 text-xs text-center">
+            Enter a value in at least one field
+          </p>
         )}
         <div className="flex gap-3 justify-end">
           <button
