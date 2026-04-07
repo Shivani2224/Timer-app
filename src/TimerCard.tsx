@@ -215,7 +215,7 @@ export default function TimerCard({
             }
             pipWindow.document.head.appendChild(style);
           }
-        } catch {}
+        } catch { /* ignore pip styling errors */ }
       }
 
       const fontLinks = document.querySelectorAll(
@@ -252,7 +252,7 @@ export default function TimerCard({
         pipWindowRef.current = null;
         setIsPip(false);
       });
-    } catch {}
+    } catch { /* ignore pip styling errors */ }
   }
 
   return (
@@ -269,6 +269,7 @@ export default function TimerCard({
             <button
               onClick={openPip}
               title="Pop out timer"
+              aria-label="Pop out timer"
               className="p-1.5 text-muted hover:text-primary transition-colors cursor-pointer"
             >
               <svg
@@ -300,6 +301,7 @@ export default function TimerCard({
           <button
             onClick={() => onDelete(id)}
             title="Remove timer"
+            aria-label="Remove timer"
             className="p-1.5 text-muted hover:text-danger transition-colors cursor-pointer"
           >
             <svg
@@ -466,6 +468,7 @@ export default function TimerCard({
         {status === "idle" && (
           <>
             <button
+              aria-label="Start button"
               onClick={() => onStart(id)}
               disabled={timeLeft === 0}
               className="px-4 sm:px-6 py-2 sm:py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 cursor-pointer"
@@ -473,6 +476,7 @@ export default function TimerCard({
               Start
             </button>
             <button
+              aria-label="Edit button"
               onClick={() => onEdit(id)}
               className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-100 hover:bg-gray-200 text-muted hover:text-gray-800 text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 cursor-pointer"
             >
@@ -482,6 +486,7 @@ export default function TimerCard({
         )}
         {status === "running" && (
           <button
+            aria-label="Pause button"
             onClick={() => onPause(id)}
             className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 cursor-pointer"
           >
@@ -490,6 +495,7 @@ export default function TimerCard({
         )}
         {status === "paused" && (
           <button
+            aria-label="Resume button"
             onClick={() => onResume(id)}
             className="px-4 sm:px-6 py-2 sm:py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-primary/25 cursor-pointer"
           >
@@ -499,12 +505,14 @@ export default function TimerCard({
         {status !== "idle" && (
           <>
             <button
+              aria-label="Stop button"
               onClick={() => onStop(id)}
               className="px-4 sm:px-6 py-2 sm:py-2.5 bg-danger/10 hover:bg-danger/20 text-danger text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-danger/20 cursor-pointer"
             >
               Stop
             </button>
             <button
+              aria-label="Reset button"
               onClick={() => onReset(id)}
               className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-100 hover:bg-gray-200 text-muted hover:text-gray-800 text-sm font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 cursor-pointer"
             >

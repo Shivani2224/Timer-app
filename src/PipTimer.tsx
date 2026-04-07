@@ -55,11 +55,7 @@ export default function PipTimer({
             justifyContent: "center",
           }}
         >
-          <svg
-            viewBox={`0 0 ${svgSize} ${svgSize}`}
-            width="100%"
-            height="100%"
-          >
+          <svg viewBox={`0 0 ${svgSize} ${svgSize}`} width="100%" height="100%">
             <circle
               cx={radius + stroke}
               cy={radius + stroke}
@@ -113,6 +109,7 @@ export default function PipTimer({
           {status === "running" && (
             <button
               onClick={onPause}
+              aria-label="Pause Button"
               style={{
                 padding: "8px 20px",
                 background: "#f3f4f6",
@@ -130,6 +127,7 @@ export default function PipTimer({
           {status === "paused" && (
             <button
               onClick={onResume}
+              aria-label="Resume Button"
               style={{
                 padding: "8px 20px",
                 background: "#7c5cff",
@@ -147,6 +145,7 @@ export default function PipTimer({
           {status !== "idle" && (
             <button
               onClick={onStop}
+              aria-label="Stop Button"
               style={{
                 padding: "8px 20px",
                 background: "rgba(239,68,68,0.1)",

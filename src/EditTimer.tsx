@@ -84,12 +84,14 @@ export default function EditTimer({ initialTime, onSave, onClose }: EditTimerPro
         )}
         <div className="flex gap-3 justify-end">
           <button
+            aria-label="cancel button"
             className="px-4 sm:px-5 py-2 sm:py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 text-sm sm:text-base rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
+            aria-label="save button"
             className="px-4 sm:px-5 py-2 sm:py-2.5 bg-primary hover:bg-primary-hover text-white text-sm sm:text-base font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-primary/25 cursor-pointer"
             onClick={handleSave}
           >
