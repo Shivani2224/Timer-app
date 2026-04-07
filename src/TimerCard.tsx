@@ -215,7 +215,7 @@ export default function TimerCard({
             }
             pipWindow.document.head.appendChild(style);
           }
-        } catch {}
+        } catch { /* ignore pip styling errors */ }
       }
 
       const fontLinks = document.querySelectorAll(
@@ -252,7 +252,7 @@ export default function TimerCard({
         pipWindowRef.current = null;
         setIsPip(false);
       });
-    } catch {}
+    } catch { /* ignore pip styling errors */ }
   }
 
   return (

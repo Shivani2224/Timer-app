@@ -96,7 +96,7 @@ describe("Focus Timer", () => {
 
     it("should show different labels for multiple timers", async () => {
       render(<App />)
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }))
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }))
       const label = screen.getAllByRole("button", {name: /click to edit label/i})
       expect(label).toHaveLength(2)
       expect(label[0].textContent).not.toBe(label[1].textContent)
@@ -346,14 +346,14 @@ describe("Focus Timer", () => {
     it("should display an Add Timer button", () => {
       render(<App />);
       expect(
-        screen.getByRole("button", { name: /add timer/i })
+        screen.getByRole("button", { name: /add.*timer/i })
       ).toBeInTheDocument();
     });
 
     it("should add a new timer when Add Timer is clicked", () => {
       render(<App />);
 
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }));
 
       const timers = screen.getAllByText("00:02:00");
       expect(timers).toHaveLength(2);
@@ -364,7 +364,7 @@ describe("Focus Timer", () => {
 
       expect(screen.queryByTitle("Remove timer")).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }));
 
       const deleteButtons = screen.getAllByTitle("Remove timer");
       expect(deleteButtons.length).toBeGreaterThan(0);
@@ -373,7 +373,7 @@ describe("Focus Timer", () => {
     it("should remove a timer when delete is clicked", () => {
       render(<App />);
 
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }));
       expect(screen.getAllByText("00:02:00")).toHaveLength(2);
 
       fireEvent.click(screen.getAllByTitle("Remove timer")[0]);
@@ -385,7 +385,7 @@ describe("Focus Timer", () => {
 
       render(<App />);
 
-      fireEvent.click(screen.getByRole("button", { name: /add timer/i }));
+      fireEvent.click(screen.getByRole("button", { name: /add.*timer/i }));
 
       const startButtons = screen.getAllByRole("button", { name: /start/i });
       fireEvent.click(startButtons[0]);
@@ -404,9 +404,9 @@ describe("Focus Timer", () => {
       const user = userEvent.setup();
       render(<App />);
 
-      await user.click(screen.getByRole("button", { name: /add timer/i }));
+      await user.click(screen.getByRole("button", { name: /add.*timer/i }));
 
-      const editButtons = screen.getAllByRole("button", { name: /^edit$/i });
+      const editButtons = screen.getAllByRole("button", { name: /edit button/i });
       await user.click(editButtons[0]);
 
       expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -606,7 +606,7 @@ describe("Focus Timer", () => {
     it("should not trigger when an input field is focused", async () => {
       render(<App />);
 
-      fireEvent.click(screen.getByRole("button", { name: /^edit$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /edit button/i }));
 
       const minutesInput = screen.getByLabelText(/minutes/i);
       fireEvent.keyDown(minutesInput, { code: "Space" });

@@ -6,14 +6,14 @@ import userEvent from "@testing-library/user-event";
 describe("Edit Timer", () => {
   it("should display an Edit button", () => {
     render(<App />);
-    expect(screen.getByRole("button", { name: /^edit$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /edit button/i })).toBeInTheDocument();
   });
 
   it("should open a popup when Edit button is clicked", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
@@ -22,7 +22,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     expect(screen.getByLabelText(/hours/i)).toHaveValue("0");
     expect(screen.getByLabelText(/minutes/i)).toHaveValue("2");
@@ -33,7 +33,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const minutesInput = screen.getByLabelText(/minutes/i);
     await user.clear(minutesInput);
@@ -46,7 +46,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const minutesInput = screen.getByLabelText(/minutes/i);
     await user.clear(minutesInput);
@@ -59,7 +59,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const secondsInput = screen.getByLabelText(/seconds/i);
     await user.clear(secondsInput);
@@ -74,7 +74,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const minutesInput = screen.getByLabelText(/minutes/i);
     await user.clear(minutesInput);
@@ -89,7 +89,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const minutesInput = screen.getByLabelText(/minutes/i);
     await user.clear(minutesInput);
@@ -104,7 +104,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     await user.clear(screen.getByLabelText(/hours/i));
     await user.clear(screen.getByLabelText(/minutes/i));
@@ -119,7 +119,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     await user.clear(screen.getByLabelText(/hours/i));
     await user.clear(screen.getByLabelText(/minutes/i));
@@ -134,7 +134,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const hoursInput = screen.getByLabelText(/hours/i);
     await user.clear(hoursInput);
@@ -149,7 +149,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const hoursInput = screen.getByLabelText(/hours/i);
     await user.clear(hoursInput);
@@ -164,7 +164,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const hoursInput = screen.getByLabelText(/hours/i);
     await user.clear(hoursInput);
@@ -186,7 +186,7 @@ describe("Edit Timer", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /^edit$/i }));
+    await user.click(screen.getByRole("button", { name: /edit button/i }));
 
     const minutesInput = screen.getByLabelText(/minutes/i);
     await user.clear(minutesInput);
