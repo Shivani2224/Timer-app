@@ -47,29 +47,30 @@ Opens at `http://localhost:5173`
 
 ### Other Commands
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `npm run dev`     | Start development server |
+| `npm run build`   | Build for production     |
 | `npm run preview` | Preview production build |
-| `npm run test` | Run test suite |
-| `npm run lint` | Lint code with ESLint |
+| `npm run test`    | Run test suite           |
+| `npm run lint`    | Lint code with ESLint    |
 
 ## Project Structure
 
 ```
 src/
-├── App.tsx          # Main state management and timer logic
-├── TimerCard.tsx    # Timer display with progress ring and controls
-├── EditTimer.tsx    # Modal for editing timer duration
-├── PipTimer.tsx     # Picture-in-Picture timer widget
-├── App.test.tsx     # Test suite (40+ test cases)
-├── index.css        # Tailwind config and custom animations
-└── main.tsx         # React entry point
+├── App.tsx              # Main state management and timer logic
+├── App.test.tsx         # Integration tests (40+ test cases)
+├── TimerCard.tsx        # Timer display with progress ring and controls
+├── TimerCard.test.tsx   # Isolated TimerCard tests
+├── EditTimer.tsx        # Modal for editing timer duration
+├── EditTimer.test.tsx   # Isolated EditTimer tests
+├── PipTimer.tsx         # Picture-in-Picture timer widget
+├── PipTimer.test.tsx    # Isolated PipTimer tests
+├── index.css            # Tailwind config and custom animations
+└── main.tsx             # React entry point
 ```
 
 ## Git Workflow
 
 All contributors must follow the git workflow defined in [GIT_FLOW.md](GIT_FLOW.md).
-
-
