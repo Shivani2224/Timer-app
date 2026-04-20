@@ -1,4 +1,12 @@
 import { useState, useEffect, useRef } from "react";
+import {
+  formatTime,
+  getRingColor,
+  calculateProgress,
+  secondsToHMS,
+  filterNumericInput,
+} from "./utils/timerUtils";
+
 import { createRoot, type Root } from "react-dom/client";
 import PipTimer from "./PipTimer";
 
@@ -46,6 +54,9 @@ export default function TimerCard({
   const pipWindowRef = useRef<Window | null>(null);
   const pipRootRef = useRef<Root | null>(null);
   const [isPip, setIsPip] = useState(false);
+  const progress = calculateProgress(status, timeLeft, initialTime);
+  const { hours, minutes, seconds } = secondsToHMS(timeLeft);
+  const display = formatTime(timeLeft);
   const [isEditing, setIsEditing] = useState(false);
   const [editHours, setEditHours] = useState("");
   const [editMinutes, setEditMinutes] = useState("");
@@ -53,30 +64,13 @@ export default function TimerCard({
   const editContainerRef = useRef<HTMLDivElement | null>(null);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const [editLabel, setEditLabel] = useState("");
-  const progress =
-    status === "idle" ? 1 : initialTime > 0 ? timeLeft / initialTime : 0;
-  const hours = Math.floor(timeLeft / 3600);
-  const minutes = Math.floor((timeLeft % 3600) / 60);
-  const seconds = timeLeft % 60;
-  const display = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-    2,
-    "0"
-  )}:${String(seconds).padStart(2, "0")}`;
-
   const radius = solo ? 140 : 100;
   const stroke = solo ? 8 : 6;
   const svgSize = radius * 2 + stroke * 2;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - progress);
 
-  const ringColor =
-    status === "idle"
-      ? "#7c5cff"
-      : timeLeft <= 5
-      ? "#ef4444"
-      : timeLeft <= 10
-      ? "#eab308"
-      : "#7c5cff";
+  const ringColor = getRingColor(status, timeLeft);
 
   const supportsPip =
     typeof window !== "undefined" && "documentPictureInPicture" in window;
@@ -135,10 +129,6 @@ export default function TimerCard({
       e.preventDefault();
       cancelEdit();
     }
-  }
-
-  function filterNumeric(value: string): string {
-    return value.replace(/[^0-9]/g, "");
   }
 
   useEffect(() => {
@@ -215,7 +205,9 @@ export default function TimerCard({
             }
             pipWindow.document.head.appendChild(style);
           }
-        } catch { /* ignore pip styling errors */ }
+        } catch {
+          /* ignore pip styling errors */
+        }
       }
 
       const fontLinks = document.querySelectorAll(
@@ -252,7 +244,9 @@ export default function TimerCard({
         pipWindowRef.current = null;
         setIsPip(false);
       });
-    } catch { /* ignore pip styling errors */ }
+    } catch {
+      /* ignore pip styling errors */
+    }
   }
 
   return (
@@ -402,7 +396,9 @@ export default function TimerCard({
                     : "w-8 sm:w-12 text-2xl sm:text-3xl"
                 }`}
                 value={editHours}
-                onChange={(e) => setEditHours(filterNumeric(e.target.value))}
+                onChange={(e) =>
+                  setEditHours(filterNumericInput(e.target.value))
+                }
               />
               <span
                 className={`font-bold text-gray-800 font-mono ${
@@ -421,7 +417,9 @@ export default function TimerCard({
                     : "w-8 sm:w-12 text-2xl sm:text-3xl"
                 }`}
                 value={editMinutes}
-                onChange={(e) => setEditMinutes(filterNumeric(e.target.value))}
+                onChange={(e) =>
+                  setEditMinutes(filterNumericInput(e.target.value))
+                }
               />
               <span
                 className={`font-bold text-gray-800 font-mono ${
@@ -440,7 +438,9 @@ export default function TimerCard({
                     : "w-8 sm:w-12 text-2xl sm:text-3xl"
                 }`}
                 value={editSeconds}
-                onChange={(e) => setEditSeconds(filterNumeric(e.target.value))}
+                onChange={(e) =>
+                  setEditSeconds(filterNumericInput(e.target.value))
+                }
               />
             </div>
           ) : (
