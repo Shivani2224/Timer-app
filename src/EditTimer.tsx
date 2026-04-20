@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { filterNumericInput, secondsToHMS, hmsToSeconds } from "./utils/timerUtils";
 
 interface EditTimerProps {
   initialTime: number;
@@ -11,15 +12,10 @@ export default function EditTimer({
   onSave,
   onClose,
 }: EditTimerProps) {
-  const [hours, setHours] = useState(String(Math.floor(initialTime / 3600)));
-  const [minutes, setMinutes] = useState(
-    String(Math.floor((initialTime % 3600) / 60))
-  );
-  const [seconds, setSeconds] = useState(String(initialTime % 60));
-
-  function handleChange(value: string): string {
-    return value.replace(/[^0-9]/g, "");
-  }
+  const initial = secondsToHMS(initialTime);
+  const [hours, setHours] = useState(String(initial.hours));
+  const [minutes, setMinutes] = useState(String(initial.minutes));
+  const [seconds, setSeconds] = useState(String(initial.seconds));
 
   const hoursExceeded = Number(hours) > 99;
   const minutesExceeded = Number(minutes) > 59;
@@ -37,7 +33,7 @@ export default function EditTimer({
     const m = Number(minutes) || 0;
     const s = Number(seconds) || 0;
 
-    const totalSeconds = h * 3600 + m * 60 + s;
+    const totalSeconds = hmsToSeconds(h, m, s);
     onSave(totalSeconds);
   }
 
@@ -76,7 +72,7 @@ export default function EditTimer({
                   : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"
               }`}
               value={hours}
-              onChange={(e) => setHours(handleChange(e.target.value))}
+              onChange={(e) => setHours(filterNumericInput(e.target.value))}
             />
           </div>
           <div className="flex flex-col items-center gap-1">
@@ -94,7 +90,7 @@ export default function EditTimer({
                   : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"
               }`}
               value={minutes}
-              onChange={(e) => setMinutes(handleChange(e.target.value))}
+              onChange={(e) => setMinutes(filterNumericInput(e.target.value))}
             />
           </div>
           <div className="flex flex-col items-center gap-1">
@@ -112,7 +108,7 @@ export default function EditTimer({
                   : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/25"
               }`}
               value={seconds}
-              onChange={(e) => setSeconds(handleChange(e.target.value))}
+              onChange={(e) => setSeconds(filterNumericInput(e.target.value))}
             />
           </div>
         </div>
