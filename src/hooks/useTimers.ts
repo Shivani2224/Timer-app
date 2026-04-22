@@ -4,10 +4,7 @@ import type { TimerData } from "../TimerCard";
 const DEFAULT_TIME = 120;
 const STORAGE_KEY = "timer-app:timers";
 
-let nextId = 1;
-
-function createTimer(): TimerData {
-  const id = nextId++;
+function createTimer(id: number): TimerData {
   return {
     id: String(id),
     label: `Timer ${id}`,
@@ -18,13 +15,18 @@ function createTimer(): TimerData {
   };
 }
 
+function nextTimerId(timers: TimerData[]): number {
+  if (timers.length === 0) return 1;
+  return Math.max(...timers.map((t) => Number(t.id) || 0)) + 1;
+}
+
 function loadTimers(): TimerData[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [createTimer()];
+    if (!raw) return [createTimer(1)];
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) return [createTimer()];
-    const timers = parsed.map((t): TimerData => {
+    if (!Array.isArray(parsed) || parsed.length === 0) return [createTimer(1)];
+    return parsed.map((t): TimerData => {
       const initialTime =
         typeof t.initialTime === "number" ? t.initialTime : DEFAULT_TIME;
       const wasRunning = t.status === "running";
@@ -41,14 +43,8 @@ function loadTimers(): TimerData[] {
         sessions: typeof t.sessions === "number" ? t.sessions : 0,
       };
     });
-    const maxId = timers.reduce(
-      (max, t) => Math.max(max, Number(t.id) || 0),
-      0
-    );
-    nextId = maxId + 1;
-    return timers;
   } catch {
-    return [createTimer()];
+    return [createTimer(1)];
   }
 }
 
@@ -197,7 +193,7 @@ export function useTimers() {
   }, []);
 
   const handleAddTimer = useCallback(() => {
-    setTimers((prev) => [...prev, createTimer()]);
+    setTimers((prev) => [...prev, createTimer(nextTimerId(prev))]);
   }, []);
 
   return {
