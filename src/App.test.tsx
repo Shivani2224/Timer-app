@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { StrictMode } from "react";
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
@@ -37,6 +38,25 @@ describe("Focus Timer", () => {
     it("should display default label ", () => {
       render(<App />);
       expect(screen.getByText(/Timer \d+/)).toBeInTheDocument();
+    });
+    it("should label the first timer as 'Timer 1' under StrictMode", () => {
+      render(
+        <StrictMode>
+          <App />
+        </StrictMode>
+      );
+      expect(screen.getByText("Timer 1")).toBeInTheDocument();
+    });
+    it("should label a newly added timer as 'Timer 2' under StrictMode", async () => {
+      const user = userEvent.setup();
+      render(
+        <StrictMode>
+          <App />
+        </StrictMode>
+      );
+      await user.click(screen.getByRole("button", { name: /add new timer/i }));
+      expect(screen.getByText("Timer 1")).toBeInTheDocument();
+      expect(screen.getByText("Timer 2")).toBeInTheDocument();
     });
     it("should become editable when clicked", async () => {
       const user = userEvent.setup();
