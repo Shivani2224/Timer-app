@@ -41,11 +41,28 @@ function loadTimers(): TimerData[] {
             : initialTime,
         status: t.status === "paused" ? "paused" : "idle",
         sessions: typeof t.sessions === "number" ? t.sessions : 0,
+        endsAt: null,
       };
     });
   } catch {
     return [createTimer(1)];
   }
+}
+
+function startRunning(t: TimerData): TimerData {
+  return {
+    ...t,
+    status: "running",
+    endsAt: Date.now() + t.timeLeft * 1000,
+  };
+}
+
+function pauseRunning(t: TimerData): TimerData {
+  const remaining =
+    typeof t.endsAt === "number"
+      ? Math.max(0, Math.ceil((t.endsAt - Date.now()) / 1000))
+      : t.timeLeft;
+  return { ...t, status: "paused", timeLeft: remaining, endsAt: null };
 }
 
 export function useTimers() {
@@ -58,10 +75,16 @@ export function useTimers() {
     intervalRef.current = setInterval(() => {
       setTimers((prev) => {
         let hasChanges = false;
+        const now = Date.now();
         const next = prev.map((t) => {
-          if (t.status !== "running") return t;
+          if (t.status !== "running" || typeof t.endsAt !== "number") return t;
+          const remainingSeconds = Math.max(
+            0,
+            Math.ceil((t.endsAt - now) / 1000)
+          );
+          if (remainingSeconds === t.timeLeft) return t;
           hasChanges = true;
-          if (t.timeLeft <= 1) {
+          if (remainingSeconds <= 0) {
             const audio = new Audio("/alarm.mp3");
             audio.play().catch(() => {});
             return {
@@ -69,9 +92,10 @@ export function useTimers() {
               status: "idle" as const,
               timeLeft: t.initialTime,
               sessions: t.sessions + 1,
+              endsAt: null,
             };
           }
-          return { ...t, timeLeft: t.timeLeft - 1 };
+          return { ...t, timeLeft: remainingSeconds };
         });
         return hasChanges ? next : prev;
       });
@@ -111,29 +135,36 @@ export function useTimers() {
     );
   }, []);
 
-  const handleStart = useCallback(
-    (id: string) => updateTimer(id, { status: "running" }),
-    [updateTimer]
-  );
-  const handlePause = useCallback(
-    (id: string) => updateTimer(id, { status: "paused" }),
-    [updateTimer]
-  );
-  const handleResume = useCallback(
-    (id: string) => updateTimer(id, { status: "running" }),
-    [updateTimer]
-  );
+  const handleStart = useCallback((id: string) => {
+    setTimers((prev) =>
+      prev.map((t) => (t.id === id ? startRunning(t) : t))
+    );
+  }, []);
+  const handlePause = useCallback((id: string) => {
+    setTimers((prev) =>
+      prev.map((t) => (t.id === id ? pauseRunning(t) : t))
+    );
+  }, []);
+  const handleResume = useCallback((id: string) => {
+    setTimers((prev) =>
+      prev.map((t) => (t.id === id ? startRunning(t) : t))
+    );
+  }, []);
   const handleStop = useCallback((id: string) => {
     setTimers((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, status: "idle", timeLeft: t.initialTime } : t
+        t.id === id
+          ? { ...t, status: "idle", timeLeft: t.initialTime, endsAt: null }
+          : t
       )
     );
   }, []);
   const handleReset = useCallback((id: string) => {
     setTimers((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, status: "idle", timeLeft: t.initialTime } : t
+        t.id === id
+          ? { ...t, status: "idle", timeLeft: t.initialTime, endsAt: null }
+          : t
       )
     );
   }, []);
@@ -165,23 +196,17 @@ export function useTimers() {
       setTimers((prev) => {
         const running = prev.find((t) => t.status === "running");
         if (running) {
-          return prev.map((t) =>
-            t.id === running.id ? { ...t, status: "paused" as const } : t
-          );
+          return prev.map((t) => (t.id === running.id ? pauseRunning(t) : t));
         }
 
         const paused = prev.find((t) => t.status === "paused");
         if (paused) {
-          return prev.map((t) =>
-            t.id === paused.id ? { ...t, status: "running" as const } : t
-          );
+          return prev.map((t) => (t.id === paused.id ? startRunning(t) : t));
         }
 
         const idle = prev.find((t) => t.status === "idle" && t.timeLeft > 0);
         if (idle) {
-          return prev.map((t) =>
-            t.id === idle.id ? { ...t, status: "running" as const } : t
-          );
+          return prev.map((t) => (t.id === idle.id ? startRunning(t) : t));
         }
 
         return prev;

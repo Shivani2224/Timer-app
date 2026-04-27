@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useTimers } from "./useTimers";
 
@@ -163,6 +163,102 @@ describe("useTimers", () => {
       act(() => result.current.handleLabelChange(id, "Focus"));
 
       expect(result.current.timers[0].label).toBe("Focus");
+    });
+  });
+
+  describe("Date.now() accuracy", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("starting a timer sets endsAt = now + timeLeft seconds", () => {
+      vi.setSystemTime(new Date(1_000_000_000_000));
+      const { result } = renderHook(() => useTimers());
+      const id = result.current.timers[0].id;
+      const initial = result.current.timers[0].timeLeft;
+
+      act(() => result.current.handleStart(id));
+
+      expect(result.current.timers[0].endsAt).toBe(
+        1_000_000_000_000 + initial * 1000
+      );
+    });
+
+    it("derives timeLeft from endsAt on each tick (no drift)", () => {
+      vi.setSystemTime(new Date(0));
+      const { result } = renderHook(() => useTimers());
+      const id = result.current.timers[0].id;
+
+      act(() => result.current.handleStart(id));
+
+      // Advance 60s — display should be exactly 60s less, regardless of tick scheduling
+      act(() => {
+        vi.advanceTimersByTime(60_000);
+      });
+
+      expect(result.current.timers[0].timeLeft).toBe(60);
+    });
+
+    it("recovers correctly when system clock jumps forward (background tab)", () => {
+      vi.setSystemTime(new Date(0));
+      const { result } = renderHook(() => useTimers());
+      const id = result.current.timers[0].id;
+
+      act(() => result.current.handleStart(id));
+
+      // Simulate the tab being backgrounded for 30s with no ticks firing,
+      // then a single tick after the clock has advanced
+      vi.setSystemTime(new Date(30_000));
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+
+      // Display reflects real elapsed time, not number of ticks
+      expect(result.current.timers[0].timeLeft).toBeLessThanOrEqual(89);
+      expect(result.current.timers[0].timeLeft).toBeGreaterThanOrEqual(88);
+    });
+
+    it("pause freezes timeLeft based on Date.now()", () => {
+      vi.setSystemTime(new Date(0));
+      const { result } = renderHook(() => useTimers());
+      const id = result.current.timers[0].id;
+
+      act(() => result.current.handleStart(id));
+
+      vi.setSystemTime(new Date(5_000));
+      act(() => result.current.handlePause(id));
+
+      const frozen = result.current.timers[0].timeLeft;
+      expect(frozen).toBe(115);
+      expect(result.current.timers[0].endsAt).toBeNull();
+
+      // Time passes while paused — value must not change
+      vi.setSystemTime(new Date(60_000));
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+      });
+      expect(result.current.timers[0].timeLeft).toBe(115);
+    });
+
+    it("resume recomputes endsAt from frozen timeLeft", () => {
+      vi.setSystemTime(new Date(0));
+      const { result } = renderHook(() => useTimers());
+      const id = result.current.timers[0].id;
+
+      act(() => result.current.handleStart(id));
+
+      vi.setSystemTime(new Date(5_000));
+      act(() => result.current.handlePause(id));
+
+      vi.setSystemTime(new Date(60_000));
+      act(() => result.current.handleResume(id));
+
+      // endsAt = 60_000 + 115 * 1000 = 175_000
+      expect(result.current.timers[0].endsAt).toBe(175_000);
     });
   });
 });
