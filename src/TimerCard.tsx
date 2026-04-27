@@ -19,6 +19,7 @@ export interface TimerData {
   initialTime: number;
   status: TimerStatus;
   sessions: number;
+  endsAt?: number | null;
 }
 
 interface TimerCardProps {
