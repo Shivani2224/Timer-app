@@ -3,6 +3,7 @@ import EditTimer from "./EditTimer";
 import TimerCard, { type TimerData } from "./TimerCard";
 
 const DEFAULT_TIME = 120;
+const STORAGE_KEY = "timer-app:timers";
 
 let nextId = 1;
 function createTimer(): TimerData {
@@ -17,8 +18,42 @@ function createTimer(): TimerData {
   };
 }
 
+function loadTimers(): TimerData[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [createTimer()];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return [createTimer()];
+    const timers = parsed.map((t): TimerData => {
+      const initialTime =
+        typeof t.initialTime === "number" ? t.initialTime : DEFAULT_TIME;
+      const wasRunning = t.status === "running";
+      return {
+        id: String(t.id),
+        label: typeof t.label === "string" ? t.label : `Timer ${t.id}`,
+        initialTime,
+        timeLeft: wasRunning
+          ? initialTime
+          : typeof t.timeLeft === "number"
+            ? t.timeLeft
+            : initialTime,
+        status: t.status === "paused" ? "paused" : "idle",
+        sessions: typeof t.sessions === "number" ? t.sessions : 0,
+      };
+    });
+    const maxId = timers.reduce(
+      (max, t) => Math.max(max, Number(t.id) || 0),
+      0
+    );
+    nextId = maxId + 1;
+    return timers;
+  } catch {
+    return [createTimer()];
+  }
+}
+
 export default function App() {
-  const [timers, setTimers] = useState<TimerData[]>([createTimer()]);
+  const [timers, setTimers] = useState<TimerData[]>(loadTimers);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -66,6 +101,12 @@ export default function App() {
     } else {
       document.title = "Timer";
     }
+  }, [timers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(timers));
+    } catch {}
   }, [timers]);
 
   const updateTimer = useCallback((id: string, updates: Partial<TimerData>) => {
