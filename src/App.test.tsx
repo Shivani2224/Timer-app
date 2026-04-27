@@ -4,6 +4,10 @@ import userEvent from "@testing-library/user-event";
 import App from "./App";
 
 describe("Focus Timer", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it("should display the Timer heading and subtitle", () => {
     render(<App />);
     expect(screen.getByText("Timer")).toBeInTheDocument();
@@ -613,6 +617,66 @@ describe("Focus Timer", () => {
 
       expect(screen.getByRole("dialog")).toBeInTheDocument();
       expect(screen.getByText("00:02:00")).toBeInTheDocument();
+    });
+  });
+
+  describe("Persistence", () => {
+    it("should save timers to localStorage when state changes", () => {
+      render(<App />);
+      fireEvent.click(screen.getByRole("button", { name: /add new timer/i }));
+
+      const raw = localStorage.getItem("timer-app:timers");
+      expect(raw).not.toBeNull();
+      const saved = JSON.parse(raw!);
+      expect(saved).toHaveLength(2);
+    });
+
+    it("should restore timers from localStorage on load", () => {
+      localStorage.setItem(
+        "timer-app:timers",
+        JSON.stringify([
+          {
+            id: "1",
+            label: "Timer 1",
+            timeLeft: 600,
+            initialTime: 600,
+            status: "idle",
+            sessions: 3,
+          },
+        ])
+      );
+
+      render(<App />);
+      expect(screen.getByText("00:10:00")).toBeInTheDocument();
+      expect(screen.getByText("3")).toBeInTheDocument();
+    });
+
+    it("should fall back to a default timer when localStorage is corrupted", () => {
+      localStorage.setItem("timer-app:timers", "not json{");
+      render(<App />);
+      expect(screen.getByText("00:02:00")).toBeInTheDocument();
+    });
+
+    it("should reset a running timer to idle on reload", () => {
+      localStorage.setItem(
+        "timer-app:timers",
+        JSON.stringify([
+          {
+            id: "1",
+            label: "Timer 1",
+            timeLeft: 30,
+            initialTime: 120,
+            status: "running",
+            sessions: 0,
+          },
+        ])
+      );
+
+      render(<App />);
+      expect(screen.getByText("00:02:00")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /start/i })
+      ).toBeInTheDocument();
     });
   });
 });
