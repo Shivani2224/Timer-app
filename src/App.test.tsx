@@ -58,6 +58,26 @@ describe("Focus Timer", () => {
       expect(screen.getByText("Timer 1")).toBeInTheDocument();
       expect(screen.getByText("Timer 2")).toBeInTheDocument();
     });
+    it("should restart numbering at 'Timer 1' after a page refresh", async () => {
+      const user = userEvent.setup();
+      const { unmount } = render(
+        <StrictMode>
+          <App />
+        </StrictMode>
+      );
+      await user.click(screen.getByRole("button", { name: /add new timer/i }));
+      expect(screen.getByText("Timer 2")).toBeInTheDocument();
+
+      unmount();
+
+      render(
+        <StrictMode>
+          <App />
+        </StrictMode>
+      );
+      expect(screen.getByText("Timer 1")).toBeInTheDocument();
+      expect(screen.queryByText("Timer 3")).not.toBeInTheDocument();
+    });
     it("should become editable when clicked", async () => {
       const user = userEvent.setup();
       render(<App />);
