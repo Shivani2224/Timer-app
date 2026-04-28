@@ -166,6 +166,90 @@ describe("useTimers", () => {
     });
   });
 
+  describe("browser notifications", () => {
+    let notificationInstances: Array<{
+      title: string;
+      options?: NotificationOptions;
+    }>;
+    let requestPermissionMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      notificationInstances = [];
+      requestPermissionMock = vi.fn(() => Promise.resolve("granted"));
+
+      class MockNotification {
+        static permission: NotificationPermission = "granted";
+        static requestPermission = requestPermissionMock;
+        constructor(title: string, options?: NotificationOptions) {
+          notificationInstances.push({ title, options });
+        }
+      }
+      vi.stubGlobal("Notification", MockNotification);
+      vi.spyOn(window.HTMLMediaElement.prototype, "play").mockResolvedValue(
+        undefined
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
+
+    it("requests notification permission on mount when permission is default", () => {
+      (globalThis.Notification as unknown as { permission: string }).permission =
+        "default";
+      renderHook(() => useTimers());
+      expect(requestPermissionMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not request permission when already granted", () => {
+      (globalThis.Notification as unknown as { permission: string }).permission =
+        "granted";
+      renderHook(() => useTimers());
+      expect(requestPermissionMock).not.toHaveBeenCalled();
+    });
+
+    it("does not request permission when denied", () => {
+      (globalThis.Notification as unknown as { permission: string }).permission =
+        "denied";
+      renderHook(() => useTimers());
+      expect(requestPermissionMock).not.toHaveBeenCalled();
+    });
+
+    it("fires a Notification when a timer's session count increases and permission is granted", () => {
+      (globalThis.Notification as unknown as { permission: string }).permission =
+        "granted";
+      const { result } = renderHook(() => useTimers());
+      const id = result.current.timers[0].id;
+      const label = result.current.timers[0].label;
+
+      act(() => result.current.updateTimer(id, { sessions: 1 }));
+
+      expect(notificationInstances).toHaveLength(1);
+      expect(notificationInstances[0].title).toBe("Timer complete");
+      expect(notificationInstances[0].options?.body).toBe(label);
+    });
+
+    it("does not fire Notification when permission is denied", () => {
+      (globalThis.Notification as unknown as { permission: string }).permission =
+        "denied";
+      const { result } = renderHook(() => useTimers());
+      const id = result.current.timers[0].id;
+
+      act(() => result.current.updateTimer(id, { sessions: 1 }));
+
+      expect(notificationInstances).toHaveLength(0);
+    });
+
+    it("does not fire Notification on initial mount", () => {
+      (globalThis.Notification as unknown as { permission: string }).permission =
+        "granted";
+      renderHook(() => useTimers());
+
+      expect(notificationInstances).toHaveLength(0);
+    });
+  });
+
   describe("Date.now() accuracy", () => {
     beforeEach(() => {
       vi.useFakeTimers();

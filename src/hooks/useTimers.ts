@@ -80,13 +80,11 @@ export function useTimers() {
           if (t.status !== "running" || typeof t.endsAt !== "number") return t;
           const remainingSeconds = Math.max(
             0,
-            Math.ceil((t.endsAt - now) / 1000)
+            Math.ceil((t.endsAt - now) / 1000),
           );
           if (remainingSeconds === t.timeLeft) return t;
           hasChanges = true;
           if (remainingSeconds <= 0) {
-            const audio = new Audio("/alarm.mp3");
-            audio.play().catch(() => {});
             return {
               ...t,
               status: "idle" as const,
@@ -107,7 +105,7 @@ export function useTimers() {
 
   useEffect(() => {
     const running = timers.find(
-      (t) => t.status === "running" || t.status === "paused"
+      (t) => t.status === "running" || t.status === "paused",
     );
     if (running) {
       const h = Math.floor(running.timeLeft / 3600);
@@ -115,7 +113,7 @@ export function useTimers() {
       const s = running.timeLeft % 60;
       const display = `${String(h).padStart(2, "0")}:${String(m).padStart(
         2,
-        "0"
+        "0",
       )}:${String(s).padStart(2, "0")}`;
       document.title = `${display} — Timer`;
     } else {
@@ -129,34 +127,48 @@ export function useTimers() {
     } catch {}
   }, [timers]);
 
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  const prevSessionsRef = useRef<Record<string, number>>({});
+  useEffect(() => {
+    for (const t of timers) {
+      const prev = prevSessionsRef.current[t.id] ?? t.sessions;
+      if (t.sessions > prev) {
+        new Audio("/alarm.mp3").play().catch(() => {});
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Timer complete", { body: t.label });
+        }
+      }
+      prevSessionsRef.current[t.id] = t.sessions;
+    }
+  }, [timers]);
+
   const updateTimer = useCallback((id: string, updates: Partial<TimerData>) => {
     setTimers((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+      prev.map((t) => (t.id === id ? { ...t, ...updates } : t)),
     );
   }, []);
 
   const handleStart = useCallback((id: string) => {
-    setTimers((prev) =>
-      prev.map((t) => (t.id === id ? startRunning(t) : t))
-    );
+    setTimers((prev) => prev.map((t) => (t.id === id ? startRunning(t) : t)));
   }, []);
   const handlePause = useCallback((id: string) => {
-    setTimers((prev) =>
-      prev.map((t) => (t.id === id ? pauseRunning(t) : t))
-    );
+    setTimers((prev) => prev.map((t) => (t.id === id ? pauseRunning(t) : t)));
   }, []);
   const handleResume = useCallback((id: string) => {
-    setTimers((prev) =>
-      prev.map((t) => (t.id === id ? startRunning(t) : t))
-    );
+    setTimers((prev) => prev.map((t) => (t.id === id ? startRunning(t) : t)));
   }, []);
   const handleStop = useCallback((id: string) => {
     setTimers((prev) =>
       prev.map((t) =>
         t.id === id
           ? { ...t, status: "idle", timeLeft: t.initialTime, endsAt: null }
-          : t
-      )
+          : t,
+      ),
     );
   }, []);
   const handleReset = useCallback((id: string) => {
@@ -164,15 +176,15 @@ export function useTimers() {
       prev.map((t) =>
         t.id === id
           ? { ...t, status: "idle", timeLeft: t.initialTime, endsAt: null }
-          : t
-      )
+          : t,
+      ),
     );
   }, []);
   const handleInlineEdit = useCallback(
     (id: string, totalSeconds: number) => {
       updateTimer(id, { timeLeft: totalSeconds, initialTime: totalSeconds });
     },
-    [updateTimer]
+    [updateTimer],
   );
   const handleDelete = useCallback((id: string) => {
     setTimers((prev) => prev.filter((t) => t.id !== id));
@@ -182,7 +194,7 @@ export function useTimers() {
     (id: string, label: string) => {
       updateTimer(id, { label });
     },
-    [updateTimer]
+    [updateTimer],
   );
 
   useEffect(() => {
