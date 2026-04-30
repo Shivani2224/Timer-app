@@ -218,9 +218,9 @@ describe("TimerCard", () => {
     it("should pre-fill inputs with current time values", async () => {
       render(<TimerCard {...createProps()} />);
       await userEvent.click(screen.getByLabelText("Click to edit time"));
-      expect(screen.getByLabelText("edit hours")).toHaveValue("0");
-      expect(screen.getByLabelText("edit minutes")).toHaveValue("2");
-      expect(screen.getByLabelText("edit seconds")).toHaveValue("0");
+      expect(screen.getByLabelText("edit hours")).toHaveValue("00");
+      expect(screen.getByLabelText("edit minutes")).toHaveValue("02");
+      expect(screen.getByLabelText("edit seconds")).toHaveValue("00");
     });
 
     it("should call onInlineEdit on Enter key", async () => {
@@ -233,6 +233,47 @@ describe("TimerCard", () => {
       await userEvent.keyboard("{Enter}");
       expect(props.onInlineEdit).toHaveBeenCalledWith("1", 300);
     });
+    it("should wrap minutes from 59 to 00 on ArrowUp", async () => {
+      const props = createProps();
+      render(<TimerCard {...props} />);
+      await userEvent.click(screen.getByLabelText("Click to edit time"));
+      const minutesInput = screen.getByLabelText("edit minutes");
+      await userEvent.clear(minutesInput);
+      await userEvent.type(minutesInput, "59");
+      await userEvent.keyboard("{ArrowUp}");
+      expect(minutesInput).toHaveValue("00");
+    });
+    it("should wrap minutes from 00 to 59 on ArrowDown", async () => {
+      const props = createProps();
+      render(<TimerCard {...props} />);
+      await userEvent.click(screen.getByLabelText("Click to edit time"));
+      const minutesInput = screen.getByLabelText("edit minutes");
+      await userEvent.clear(minutesInput);
+      await userEvent.type(minutesInput, "00");
+      await userEvent.keyboard("{ArrowDown}");
+      expect(minutesInput).toHaveValue("59");
+    });
+    it("should wrap hours from 168 to 00 on ArrowUp", async () => {
+      const props = createProps();
+      render(<TimerCard {...props} />);
+      await userEvent.click(screen.getByLabelText("Click to edit time"));
+      const hoursInput = screen.getByLabelText("edit hours");
+      await userEvent.clear(hoursInput);
+      await userEvent.type(hoursInput, "168");
+      await userEvent.keyboard("{ArrowUp}");
+      expect(hoursInput).toHaveValue("00");
+    });
+    it("should wrap hours from 00 to 168 on ArrowDown", async () => {
+      const props = createProps();
+      render(<TimerCard {...props} />);
+      await userEvent.click(screen.getByLabelText("Click to edit time"));
+      const hoursInput = screen.getByLabelText("edit hours");
+      await userEvent.clear(hoursInput);
+      await userEvent.type(hoursInput, "00");
+      await userEvent.keyboard("{ArrowDown}");
+      expect(hoursInput).toHaveValue("168");
+    });
+    
 
     it("should cancel edit on Escape key", async () => {
       const props = createProps();
