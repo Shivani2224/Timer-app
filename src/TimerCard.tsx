@@ -78,10 +78,29 @@ export default function TimerCard({
 
   function startEditing() {
     if (status !== "idle") return;
-    setEditHours(String(hours));
-    setEditMinutes(String(minutes));
-    setEditSeconds(String(seconds));
+    setEditHours(String(hours).padStart(2, "0"));
+    setEditMinutes(String(minutes).padStart(2, "0"));
+    setEditSeconds(String(seconds).padStart(2, "0"));
     setIsEditing(true);
+  }
+
+  function handleArrowKey(
+    e: React.KeyboardEvent,
+    current: string,
+    setValue: (v: string) => void,
+    max: number,
+  ) {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setValue(String((Number(current) + 1) % (max + 1)).padStart(2, "0"));
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setValue(
+        String((Number(current) - 1 + (max + 1)) % (max + 1)).padStart(2, "0"),
+      );
+    }
   }
 
   function startLabelEdit() {
@@ -157,7 +176,7 @@ export default function TimerCard({
         onPause={() => onPause(id)}
         onResume={() => onResume(id)}
         onStop={() => onStop(id)}
-      />
+      />,
     );
   }, [
     isPip,
@@ -201,7 +220,7 @@ export default function TimerCard({
             const style = pipWindow.document.createElement("style");
             for (const rule of sheet.cssRules) {
               style.appendChild(
-                pipWindow.document.createTextNode(rule.cssText)
+                pipWindow.document.createTextNode(rule.cssText),
               );
             }
             pipWindow.document.head.appendChild(style);
@@ -212,7 +231,7 @@ export default function TimerCard({
       }
 
       const fontLinks = document.querySelectorAll(
-        'link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]'
+        'link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]',
       );
       fontLinks.forEach((link) => {
         pipWindow.document.head.appendChild(link.cloneNode(true));
@@ -234,7 +253,7 @@ export default function TimerCard({
           onPause={() => onPause(id)}
           onResume={() => onResume(id)}
           onStop={() => onStop(id)}
-        />
+        />,
       );
 
       setIsPip(true);
@@ -400,6 +419,9 @@ export default function TimerCard({
                 onChange={(e) =>
                   setEditHours(filterNumericInput(e.target.value))
                 }
+                onKeyDown={(e) =>
+                  handleArrowKey(e, editHours, setEditHours, 168)
+                }
               />
               <span
                 className={`font-bold text-gray-800 font-mono ${
@@ -421,6 +443,9 @@ export default function TimerCard({
                 onChange={(e) =>
                   setEditMinutes(filterNumericInput(e.target.value))
                 }
+                onKeyDown={(e) =>
+                  handleArrowKey(e, editMinutes, setEditMinutes, 59)
+                }
               />
               <span
                 className={`font-bold text-gray-800 font-mono ${
@@ -441,6 +466,9 @@ export default function TimerCard({
                 value={editSeconds}
                 onChange={(e) =>
                   setEditSeconds(filterNumericInput(e.target.value))
+                }
+                onKeyDown={(e) =>
+                  handleArrowKey(e, editSeconds, setEditSeconds, 59)
                 }
               />
             </div>
